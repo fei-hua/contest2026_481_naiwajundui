@@ -1,0 +1,18 @@
+config EXAMPLES_VELATIME
+	tristate "VelaTime - AI Student Time Planner"
+	default n
+	depends on GRAPHICS_LVGL
+	---help---
+		Enable VelaTime, an AI-powered student time planner for openvela.
+
+if EXAMPLES_VELATIME
+
+config EXAMPLES_VELATIME_PRIORITY
+	int "velatime task priority"
+	default 100
+
+config EXAMPLES_VELATIME_STACKSIZE
+	int "velatime stack size"
+	default 32768
+
+endif # EXAMPLES_VELATIME

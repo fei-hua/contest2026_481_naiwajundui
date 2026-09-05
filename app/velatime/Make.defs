@@ -1,0 +1,3 @@
+ifneq ($(CONFIG_EXAMPLES_VELATIME),)
+CONFIGURED_APPS += $(APPDIR)/packages/demos/contest2026_481_velatime
+endif
