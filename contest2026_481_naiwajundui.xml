@@ -10,6 +10,7 @@
 
   <project path="contest2026_481_naiwajundui" name="contest2026_481_naiwajundui">
     <linkfile src="app/hello_app" dest="packages/demos/contest2026_481_hello_app"/>
+    <linkfile src="app/velatime" dest="packages/demos/contest2026_481_velatime"/>
     <linkfile src="quickapp/hello_quickapp" dest="packages/apps/contest2026_481_hello_quickapp"/>
     <linkfile src="board/contest_board" dest="vendor/openvela/boards/contest2026_481_board"/>
   </project>

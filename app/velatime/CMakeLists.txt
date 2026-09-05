@@ -1,0 +1,20 @@
+if(CONFIG_EXAMPLES_VELATIME)
+  nuttx_add_application(
+    NAME
+    velatime
+    PRIORITY
+    ${CONFIG_EXAMPLES_VELATIME_PRIORITY}
+    STACKSIZE
+    ${CONFIG_EXAMPLES_VELATIME_STACKSIZE}
+    MODULE
+    ${CONFIG_EXAMPLES_VELATIME}
+    DEPENDS
+    lvgl
+    SRCS
+    velatime_main.c
+    ui/ui_mock.c
+    ui/ui_home.c
+    ui/ui_schedule.c
+    ui/ui_tasks.c
+    ui/ui_popup.c)
+endif()
