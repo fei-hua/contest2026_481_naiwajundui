@@ -12,6 +12,9 @@ if(CONFIG_EXAMPLES_VELATIME)
     lvgl
     SRCS
     velatime_main.c
+    core/core_task.c
+    core/core_schedule.c
+    core/core_recommend.c
     ui/ui_mock.c
     ui/ui_home.c
     ui/ui_schedule.c
