@@ -4,6 +4,7 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <time.h>
 
 static int priority_score(const char *priority)
 {
@@ -16,6 +17,62 @@ static int priority_score(const char *priority)
       return 20;
     }
   return 0;
+}
+
+static time_t deadline_to_time(const char *s)
+{
+  struct tm tmv;
+  int y, mo, d, h, mi;
+
+  if (sscanf(s, "%d-%d-%d %d:%d", &y, &mo, &d, &h, &mi) != 5)
+    {
+      return 0;
+    }
+
+  memset(&tmv, 0, sizeof(tmv));
+  tmv.tm_year = y - 1900;
+  tmv.tm_mon  = mo - 1;
+  tmv.tm_mday = d;
+  tmv.tm_hour = h;
+  tmv.tm_min  = mi;
+  tmv.tm_isdst = -1;
+
+  return mktime(&tmv);
+}
+
+static int urgency_score(const char *deadline)
+{
+  struct timespec ts;
+  time_t now, dl;
+  long diff_minutes;
+
+  if (clock_gettime(CLOCK_REALTIME, &ts) != 0)
+    {
+      return 20;
+    }
+  now = ts.tv_sec;
+
+  dl = deadline_to_time(deadline);
+  if (dl == 0)
+    {
+      return 20;
+    }
+
+  diff_minutes = (long)(dl - now) / 60;
+
+  if (diff_minutes <= 0)
+    {
+      return 100;
+    }
+  else if (diff_minutes <= 24 * 60)
+    {
+      return 80;
+    }
+  else if (diff_minutes <= 72 * 60)
+    {
+      return 50;
+    }
+  return 20;
 }
 
 int core_recommend_pick(int weekday, velatime_recomm_book_t *out)
@@ -39,7 +96,6 @@ int core_recommend_pick(int weekday, velatime_recomm_book_t *out)
     {
       const velatime_task_t *t = core_task_get(i);
       int score = 0;
-      int urgency = 20;
       int match = 0;
 
       if (!t || t->status != VELATIME_STATUS_WAITING)
@@ -47,16 +103,12 @@ int core_recommend_pick(int weekday, velatime_recomm_book_t *out)
           continue;
         }
 
-      /* 紧急分：这里用简化固定值，后续接入真实时钟再细化 */
-      urgency = 100;
-
-      /* 时长匹配：任务时长 <= 第一个空闲窗口则加分 */
       if (slot_count > 0 && t->estimated_minutes <= slots[0].minutes)
         {
           match = 50;
         }
 
-      score = urgency + priority_score(t->priority) + match;
+      score = urgency_score(t->deadline) + priority_score(t->priority) + match;
 
       if (score > best_score)
         {
