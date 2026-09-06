@@ -5,7 +5,7 @@
 #define VELATIME_MAX_COURSE   32
 #define VELATIME_MAX_DEADLINE 32
 #define VELATIME_MAX_PRIORITY 16
-#define VELATIME_MAX_ID       16
+#define VELATIME_MAX_ID       24
 #define VELATIME_MAX_REASON   128
 
 typedef enum

@@ -5,12 +5,25 @@
 #include <lvgl/lvgl.h>
 
 #include "ui/velatime_ui.h"
+#include "core/core_task.h"
+#include "core/core_schedule.h"
 
 #undef NEED_BOARDINIT
 
 #if defined(CONFIG_BOARDCTL) && !defined(CONFIG_NSH_ARCHINIT)
 #  define NEED_BOARDINIT 1
 #endif
+
+static void import_mock_tasks(void)
+{
+  extern velatime_task_t mock_tasks[5];
+  int i;
+
+  for (i = 0; i < 3; i++)
+    {
+      core_task_add(&mock_tasks[i]);
+    }
+}
 
 int main(int argc, FAR char *argv[])
 {
@@ -27,6 +40,10 @@ int main(int argc, FAR char *argv[])
 #endif
 
   lv_init();
+
+  core_task_init();
+  import_mock_tasks();
+  core_schedule_init();
 
   lv_nuttx_dsc_init(&info);
 

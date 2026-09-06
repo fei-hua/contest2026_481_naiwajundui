@@ -1,5 +1,6 @@
 #include "velatime_ui.h"
-#include "ui_mock.h"
+#include "../core/core_recommend.h"
+
 #include <stdio.h>
 
 static void style_screen(lv_obj_t *scr)
@@ -13,6 +14,9 @@ void velatime_ui_init(void)
 
 void velatime_ui_home_show(void)
 {
+  velatime_recomm_book_t rec;
+  int has_rec = core_recommend_pick(1, &rec);
+
   lv_obj_t *scr = lv_obj_create(NULL);
   style_screen(scr);
 
@@ -34,21 +38,21 @@ void velatime_ui_home_show(void)
   lv_obj_align(card, LV_ALIGN_TOP_LEFT, 16, 84);
 
   lv_obj_t *card_title = lv_label_create(card);
-  lv_label_set_text(card_title, mock_recommend.task_title);
+  lv_label_set_text(card_title, has_rec ? rec.task_title : "暂无推荐");
   lv_obj_set_style_text_color(card_title, lv_color_hex(0xFFFFFF), 0);
   lv_obj_align(card_title, LV_ALIGN_TOP_LEFT, 12, 10);
 
   char meta[96];
   snprintf(meta, sizeof(meta), "%d min free | suggested %s",
-           mock_recommend.available_minutes,
-           mock_recommend.suggested_start);
+           has_rec ? rec.available_minutes : 0,
+           has_rec ? rec.suggested_start : "--");
   lv_obj_t *card_meta = lv_label_create(card);
   lv_label_set_text(card_meta, meta);
   lv_obj_set_style_text_color(card_meta, lv_color_hex(0x8890A0), 0);
   lv_obj_align_to(card_meta, card_title, LV_ALIGN_OUT_BOTTOM_LEFT, 0, 8);
 
   lv_obj_t *card_reason = lv_label_create(card);
-  lv_label_set_text(card_reason, mock_recommend.reason);
+  lv_label_set_text(card_reason, has_rec ? rec.reason : "请添加任务");
   lv_obj_set_style_text_color(card_reason, lv_color_hex(0xFF8A3D), 0);
   lv_obj_align_to(card_reason, card_meta, LV_ALIGN_OUT_BOTTOM_LEFT, 0, 8);
 
