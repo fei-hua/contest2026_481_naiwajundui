@@ -2,6 +2,7 @@ config EXAMPLES_VELATIME
 	tristate "VelaTime - AI Student Time Planner"
 	default n
 	depends on GRAPHICS_LVGL
+	select LV_FONT_SIMSUN_16_CJK
 	---help---
 		Enable VelaTime, an AI-powered student time planner for openvela.
 
@@ -13,6 +14,6 @@ config EXAMPLES_VELATIME_PRIORITY
 
 config EXAMPLES_VELATIME_STACKSIZE
 	int "velatime stack size"
-	default 32768
+	default 40960
 
 endif # EXAMPLES_VELATIME
