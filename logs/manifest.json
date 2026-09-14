@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0",
+  "team_id": "contest2026_481_naiwajundui",
+  "github_login": "fei-hua",
+  "generator": "opencode+deepseek-harness",
+  "sessions": [
+    {
+      "session_id": "ses_fa7780177ffe0FRlTOKnZzKs6v",
+      "tool": "opencode",
+      "title": "OpenVela 初学者参赛项目推荐",
+      "started_at": "2026-08-31T15:55:02.664Z",
+      "last_event_at": "2026-09-10T10:42:43.051Z",
+      "event_count": 1401,
+      "file_path": "logs/fei-hua/2026-08-31/opencode__ses_fa7780177ffe0FRlTOKnZzKs6v.jsonl",
+      "collection_mode": "cli",
+      "health": "ok"
+    },
+    {
+      "session_id": "dsh-velatime-20260914",
+      "tool": "deepseek-harness",
+      "title": "VelaTime 续作：SSH 直连、中文字库、紧迫度修复、主动提醒、交付文档",
+      "started_at": "2026-09-14T09:20:00.000Z",
+      "last_event_at": "2026-09-14T23:50:00.000Z",
+      "event_count": 35,
+      "file_path": "logs/fei-hua/2026-09-14/deepseek-harness__dsh-velatime-20260914.jsonl",
+      "collection_mode": "cli",
+      "health": "ok"
+    }
+  ],
+  "updated_at": "2026-09-14T15:46:24.954Z"
+}
