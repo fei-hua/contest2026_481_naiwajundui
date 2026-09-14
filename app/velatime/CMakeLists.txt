@@ -15,9 +15,11 @@ if(CONFIG_EXAMPLES_VELATIME)
     core/core_task.c
     core/core_schedule.c
     core/core_recommend.c
+    core/core_agent_sync.c
     ui/ui_mock.c
     ui/ui_home.c
     ui/ui_schedule.c
     ui/ui_tasks.c
+    ui/velatime_font_cn.c
     ui/ui_popup.c)
 endif()
