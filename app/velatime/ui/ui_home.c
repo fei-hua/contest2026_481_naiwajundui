@@ -15,6 +15,39 @@ static lv_obj_t *g_card_reason = NULL;
 static lv_obj_t *g_btn_start = NULL;
 static lv_obj_t *g_btn_delay = NULL;
 static lv_obj_t *g_status_label = NULL;
+static char g_reminder[192] = "";
+
+static void apply_reminder_text(void)
+{
+  if (g_card_reason == NULL)
+    {
+      return;
+    }
+
+  if (g_reminder[0] != '\0')
+    {
+      lv_label_set_text(g_card_reason, g_reminder);
+    }
+  else
+    {
+      velatime_recomm_book_t rec;
+      int has_rec = core_recommend_pick(1, &rec);
+      lv_label_set_text(g_card_reason,
+                        has_rec ? rec.reason : "Add tasks to get started");
+    }
+}
+
+void velatime_ui_set_reminder(const char *text)
+{
+  if (text == NULL)
+    {
+      return;
+    }
+
+  strncpy(g_reminder, text, sizeof(g_reminder) - 1);
+  g_reminder[sizeof(g_reminder) - 1] = '\0';
+  apply_reminder_text();
+}
 
 static void style_screen(lv_obj_t *scr)
 {
@@ -46,6 +79,7 @@ void velatime_ui_home_refresh(void)
   lv_label_set_text(g_card_meta, meta);
   lv_label_set_text(g_card_reason,
                     has_rec ? rec.reason : "Add tasks to get started");
+  apply_reminder_text();
 
   if (g_btn_start != NULL && g_btn_delay != NULL)
     {

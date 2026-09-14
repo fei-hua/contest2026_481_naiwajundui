@@ -7,9 +7,11 @@
 #include "ui/velatime_ui.h"
 #include "core/core_task.h"
 #include "core/core_schedule.h"
+#include "core/core_recommend.h"
 #include "core/core_agent_sync.h"
 
 #include <stdio.h>
+#include <time.h>
 
 #undef NEED_BOARDINIT
 
@@ -28,8 +30,39 @@ static void import_mock_tasks(void)
     }
 }
 
+/* 端侧主动提醒：不依赖网络和模型，启动后立刻给出"现在该做什么"。
+   若稍后 Agent 通过 heartbeat 写回 REMINDER.txt，会用模型版本覆盖它。 */
+static void publish_local_reminder(void)
+{
+  velatime_recomm_book_t rec;
+  struct timespec ts;
+  struct tm now_tm;
+  int weekday = 1;
+  char text[192];
+
+  if (clock_gettime(CLOCK_REALTIME, &ts) == 0 &&
+      localtime_r(&ts.tv_sec, &now_tm) != NULL)
+    {
+      /* tm_wday: 0=周日 … 6=周六；VelaTime 用 1=周一 … 7=周日 */
+      weekday = (now_tm.tm_wday == 0) ? 7 : now_tm.tm_wday;
+    }
+
+  if (!core_recommend_pick(weekday, &rec))
+    {
+      printf("VelaTime: no recommendation yet, reminder skipped\n");
+      return;
+    }
+
+  if (core_agent_reminder_local(rec.task_title, rec.reason,
+                                rec.suggested_start, text, sizeof(text)) == 0)
+    {
+      velatime_ui_set_reminder(text);
+    }
+}
+
 static void agent_sync_timer_cb(lv_timer_t *timer)
 {
+  char reminder[192];
   int result;
 
   (void)timer;
@@ -37,6 +70,16 @@ static void agent_sync_timer_cb(lv_timer_t *timer)
   if (result > 0)
     {
       velatime_ui_home_refresh();
+      /* 任务变了：重新武装 heartbeat，让 Agent 下一次主动检查 */
+      core_agent_reminder_publish(core_task_count());
+    }
+
+  /* 主动提醒：Agent 写回新建议就显示到界面 */
+  if (core_agent_reminder_check(core_task_count(), reminder,
+                                sizeof(reminder)) > 0)
+    {
+      printf("VelaTime: proactive reminder: %s\n", reminder);
+      velatime_ui_set_reminder(reminder);
     }
 }
 
@@ -71,6 +114,9 @@ int main(int argc, FAR char *argv[])
       printf("VelaTime: imported %d agent task(s)\n", imported);
     }
 
+  /* 武装主动提醒：让 Agent 的 heartbeat 定时器知道有待办要处理 */
+  core_agent_reminder_publish(core_task_count());
+
   core_schedule_init();
 
   lv_nuttx_dsc_init(&info);
@@ -92,6 +138,9 @@ int main(int argc, FAR char *argv[])
 
   velatime_ui_init();
   velatime_ui_home_show();
+
+  /* 启动即给出一次端侧主动提醒（演示/离线都能看到效果） */
+  publish_local_reminder();
 
   if (lv_timer_create(agent_sync_timer_cb, 1000, NULL) == NULL)
     {
