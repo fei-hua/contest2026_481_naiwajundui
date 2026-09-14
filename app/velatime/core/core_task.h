@@ -14,6 +14,9 @@ int core_task_save(void);
 /* 新增任务，成功返回任务 id（字符串），失败返回 NULL */
 const char *core_task_add(const velatime_task_t *task);
 
+/* 使用给定任务列表替换当前全部任务 */
+int core_task_replace_all(const velatime_task_t *tasks, int count);
+
 /* 按 id 查找任务，找到返回指针，找不到返回 NULL */
 velatime_task_t *core_task_find(const char *id);
 

@@ -60,6 +60,29 @@ const char *core_task_add(const velatime_task_t *task)
   return s_tasks[s_count - 1].id;
 }
 
+int core_task_replace_all(const velatime_task_t *tasks, int count)
+{
+  int i;
+
+  if (count < 0 || count > VELATIME_MAX_TASKS ||
+      (count > 0 && tasks == NULL))
+    {
+      return -1;
+    }
+
+  s_count = 0;
+  for (i = 0; i < count; i++)
+    {
+      if (core_task_add(&tasks[i]) == NULL)
+        {
+          s_count = 0;
+          return -1;
+        }
+    }
+
+  return s_count;
+}
+
 velatime_task_t *core_task_find(const char *id)
 {
   int i;

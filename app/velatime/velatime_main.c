@@ -7,6 +7,9 @@
 #include "ui/velatime_ui.h"
 #include "core/core_task.h"
 #include "core/core_schedule.h"
+#include "core/core_agent_sync.h"
+
+#include <stdio.h>
 
 #undef NEED_BOARDINIT
 
@@ -25,10 +28,23 @@ static void import_mock_tasks(void)
     }
 }
 
+static void agent_sync_timer_cb(lv_timer_t *timer)
+{
+  int result;
+
+  (void)timer;
+  result = core_agent_sync_if_changed();
+  if (result > 0)
+    {
+      velatime_ui_home_refresh();
+    }
+}
+
 int main(int argc, FAR char *argv[])
 {
   lv_nuttx_dsc_t info;
   lv_nuttx_result_t result;
+  int imported;
 
   if (lv_is_initialized())
     {
@@ -42,7 +58,19 @@ int main(int argc, FAR char *argv[])
   lv_init();
 
   core_task_init();
-  import_mock_tasks();
+
+  core_agent_skill_install();
+  imported = core_agent_sync_from_file();
+  if (imported <= 0)
+    {
+      printf("VelaTime: no agent tasks imported, using mock tasks\n");
+      import_mock_tasks();
+    }
+  else
+    {
+      printf("VelaTime: imported %d agent task(s)\n", imported);
+    }
+
   core_schedule_init();
 
   lv_nuttx_dsc_init(&info);
@@ -64,6 +92,11 @@ int main(int argc, FAR char *argv[])
 
   velatime_ui_init();
   velatime_ui_home_show();
+
+  if (lv_timer_create(agent_sync_timer_cb, 1000, NULL) == NULL)
+    {
+      printf("VelaTime: cannot create agent sync timer\n");
+    }
 
   while (1)
     {
