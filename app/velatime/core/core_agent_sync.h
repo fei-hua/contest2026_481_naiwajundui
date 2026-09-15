@@ -31,4 +31,9 @@ int core_agent_reminder_local(const char *title, const char *reason,
                               const char *suggested_start,
                               char *out, size_t out_size);
 
+/* 把当前内存里的任务写回 TASKS.md（保持与 Agent 相同的行格式），
+   使应用侧的状态变更（开始/延后）在重启后仍然存在。
+   写入任务数返回 >=0，失败返回 -1。 */
+int core_agent_sync_save(void);
+
 #endif /* VELATIME_CORE_AGENT_SYNC_H */
