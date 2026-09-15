@@ -34,12 +34,14 @@ void velatime_ui_popup_show(void)
   int has_rec = core_recommend_pick(core_recommend_today_weekday(), &rec);
 
   lv_obj_t *scr = lv_obj_create(NULL);
-  velatime_ui_style_screen(scr);
+  lv_obj_t *col;
 
-  lv_obj_t *card = lv_obj_create(scr);
-  /* 与其它页面统一：固定尺寸居中、内边距 24、按钮 200x64 */
-  lv_obj_set_size(card, 760, 420);
-  lv_obj_center(card);
+  velatime_ui_style_screen(scr);
+  col = velatime_ui_page_column(scr);
+
+  /* 与其它页面统一：放进居中内容列，列内铺满宽度 */
+  lv_obj_t *card = lv_obj_create(col);
+  lv_obj_set_size(card, LV_PCT(100), 360);
   lv_obj_set_style_bg_color(card, lv_color_hex(0x1C2130), 0);
   lv_obj_set_style_radius(card, 16, 0);
   lv_obj_set_style_border_width(card, 0, 0);
@@ -47,7 +49,7 @@ void velatime_ui_popup_show(void)
   lv_obj_set_style_pad_row(card, 16, 0);
   lv_obj_set_flex_flow(card, LV_FLEX_FLOW_COLUMN);
   lv_obj_set_flex_align(card, LV_FLEX_ALIGN_SPACE_EVENLY,
-                        LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+                        LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
   lv_obj_remove_flag(card, LV_OBJ_FLAG_SCROLLABLE);
 
   lv_obj_t *title = lv_label_create(card);
@@ -92,9 +94,9 @@ void velatime_ui_popup_show(void)
   lv_obj_set_style_bg_opa(row, LV_OPA_TRANSP, 0);
   lv_obj_set_style_border_width(row, 0, 0);
   lv_obj_set_style_pad_all(row, 0, 0);
-  lv_obj_set_style_pad_column(row, 16, 0);
+  lv_obj_set_style_pad_column(row, 24, 0);
   lv_obj_set_flex_flow(row, LV_FLEX_FLOW_ROW);
-  lv_obj_set_flex_align(row, LV_FLEX_ALIGN_CENTER,
+  lv_obj_set_flex_align(row, LV_FLEX_ALIGN_START,
                         LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
   lv_obj_remove_flag(row, LV_OBJ_FLAG_SCROLLABLE);
 
@@ -111,6 +113,15 @@ void velatime_ui_popup_show(void)
   lv_label_set_text(close_label, "稍后再说");
   lv_obj_center(close_label);
   lv_obj_add_event_cb(btn_close, on_close_click, LV_EVENT_CLICKED, NULL);
+
+  /* 底部返回：与其它页面一致，贴在内容列左下 */
+  lv_obj_t *btn_back = lv_button_create(col);
+  lv_obj_set_size(btn_back, VELATIME_UI_BTN_W, VELATIME_UI_BTN_H);
+  lv_obj_align(btn_back, LV_ALIGN_BOTTOM_LEFT, 0, 0);
+  lv_obj_t *back_label = lv_label_create(btn_back);
+  lv_label_set_text(back_label, "返回首页");
+  lv_obj_center(back_label);
+  lv_obj_add_event_cb(btn_back, on_close_click, LV_EVENT_CLICKED, NULL);
 
   lv_scr_load(scr);
 }
