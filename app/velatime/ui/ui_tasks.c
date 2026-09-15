@@ -2,11 +2,14 @@
 #include "../core/core_task.h"
 #include "../core/core_recommend.h"
 #include "../core/core_schedule.h"
+#include "../core/core_agent_sync.h"
 
 #include <stdio.h>
 #include <string.h>
 
-/* 任务列表：显示 Agent 写入的全部任务（待办在前，已完成置灰） */
+/* 任务列表：显示全部任务；点某一行进入"完成 / 延后 / 删除"操作面板 */
+
+static void on_row_click_back(lv_event_t *e);
 
 static const char *status_icon(const velatime_task_t *task)
 {
@@ -41,11 +44,188 @@ static uint32_t status_color(const velatime_task_t *task)
     }
 }
 
+/* 当前操作的任务 id（用 id 而不是下标，避免改动后指错） */
+static char g_active_id[VELATIME_MAX_ID];
+static int g_confirm_delete;
+
 static void on_back_click(lv_event_t *e)
 {
   (void)e;
   velatime_ui_home_show();
 }
+
+/* ---------- 操作面板 ---------- */
+
+static void on_action_complete(lv_event_t *e)
+{
+  (void)e;
+  if (g_active_id[0] != '\0')
+    {
+      core_task_set_status(g_active_id, VELATIME_STATUS_DONE);
+      core_agent_sync_save();
+      printf("VelaTime: task completed\n");
+      fflush(stdout);
+    }
+  velatime_ui_tasks_show();
+}
+
+static void on_action_postpone(lv_event_t *e)
+{
+  (void)e;
+  if (g_active_id[0] != '\0')
+    {
+      core_task_set_status(g_active_id, VELATIME_STATUS_POSTPONED);
+      core_agent_sync_save();
+      printf("VelaTime: task postponed\n");
+      fflush(stdout);
+    }
+  velatime_ui_tasks_show();
+}
+
+static void on_action_delete(lv_event_t *e)
+{
+  (void)e;
+
+  if (g_active_id[0] == '\0')
+    {
+      velatime_ui_tasks_show();
+      return;
+    }
+
+  /* 删除不可逆：第一次点击只切到"确认删除"，再点一次才真删 */
+  if (!g_confirm_delete)
+    {
+      g_confirm_delete = 1;
+      velatime_ui_task_actions_show(g_active_id);
+      return;
+    }
+
+  if (core_task_delete(g_active_id) == 0)
+    {
+      core_agent_sync_save();
+      printf("VelaTime: task deleted\n");
+      fflush(stdout);
+    }
+
+  g_active_id[0] = '\0';
+  g_confirm_delete = 0;
+  velatime_ui_tasks_show();
+}
+
+static void on_row_click(lv_event_t *e)
+{
+  const char *id = (const char *)lv_event_get_user_data(e);
+
+  if (id == NULL || id[0] == '\0')
+    {
+      return;
+    }
+
+  strncpy(g_active_id, id, sizeof(g_active_id) - 1);
+  g_active_id[sizeof(g_active_id) - 1] = '\0';
+  g_confirm_delete = 0;
+  velatime_ui_task_actions_show(g_active_id);
+}
+
+static void on_row_click_back(lv_event_t *e)
+{
+  (void)e;
+  g_confirm_delete = 0;
+  velatime_ui_tasks_show();
+}
+
+void velatime_ui_task_actions_show(const char *task_id)
+{
+  const velatime_task_t *t = core_task_find(task_id);
+  char detail[128];
+  lv_obj_t *row;
+
+  lv_obj_t *scr = lv_obj_create(NULL);
+  velatime_ui_style_screen(scr);
+
+  lv_obj_t *card = lv_obj_create(scr);
+  lv_obj_set_size(card, LV_PCT(64), LV_PCT(56));
+  lv_obj_center(card);
+  lv_obj_set_style_bg_color(card, lv_color_hex(0x1C2130), 0);
+  lv_obj_set_style_radius(card, 16, 0);
+  lv_obj_set_style_border_width(card, 0, 0);
+  lv_obj_set_style_pad_all(card, 24, 0);
+  lv_obj_set_style_pad_row(card, 12, 0);
+  lv_obj_set_flex_flow(card, LV_FLEX_FLOW_COLUMN);
+  lv_obj_set_flex_align(card, LV_FLEX_ALIGN_SPACE_EVENLY,
+                        LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+  lv_obj_remove_flag(card, LV_OBJ_FLAG_SCROLLABLE);
+
+  lv_obj_t *title = lv_label_create(card);
+  lv_label_set_text(title, "任务操作");
+  lv_obj_set_style_text_color(title, lv_color_hex(0xFF8A3D), 0);
+
+  lv_obj_t *name = lv_label_create(card);
+  lv_label_set_text(name, (t != NULL) ? t->title : "(任务不存在)");
+  lv_obj_set_style_text_color(name, lv_color_hex(0xFFFFFF), 0);
+  lv_obj_set_width(name, LV_PCT(100));
+  lv_label_set_long_mode(name, LV_LABEL_LONG_WRAP);
+
+  if (t != NULL && t->deadline[0] != '\0')
+    {
+      snprintf(detail, sizeof(detail), "%s · 截止 %s", status_text(t),
+               t->deadline);
+    }
+  else
+    {
+      snprintf(detail, sizeof(detail), "%s", (t != NULL) ? status_text(t) : "-");
+    }
+
+  lv_obj_t *meta = lv_label_create(card);
+  lv_label_set_text(meta, detail);
+  lv_obj_set_style_text_color(meta, lv_color_hex(0x8890A0), 0);
+
+  row = lv_obj_create(card);
+  lv_obj_set_width(row, LV_PCT(100));
+  lv_obj_set_height(row, LV_SIZE_CONTENT);
+  lv_obj_set_style_bg_opa(row, LV_OPA_TRANSP, 0);
+  lv_obj_set_style_border_width(row, 0, 0);
+  lv_obj_set_style_pad_all(row, 0, 0);
+  lv_obj_set_style_pad_column(row, 16, 0);
+  lv_obj_set_flex_flow(row, LV_FLEX_FLOW_ROW);
+  lv_obj_set_flex_align(row, LV_FLEX_ALIGN_CENTER,
+                        LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+  lv_obj_remove_flag(row, LV_OBJ_FLAG_SCROLLABLE);
+
+  lv_obj_t *btn_done = lv_button_create(row);
+  lv_obj_set_size(btn_done, 132, 48);
+  lv_obj_t *done_label = lv_label_create(btn_done);
+  lv_label_set_text(done_label, "标为完成");
+  lv_obj_center(done_label);
+  lv_obj_add_event_cb(btn_done, on_action_complete, LV_EVENT_CLICKED, NULL);
+
+  lv_obj_t *btn_later = lv_button_create(row);
+  lv_obj_set_size(btn_later, 132, 48);
+  lv_obj_t *later_label = lv_label_create(btn_later);
+  lv_label_set_text(later_label, "延后处理");
+  lv_obj_center(later_label);
+  lv_obj_add_event_cb(btn_later, on_action_postpone, LV_EVENT_CLICKED, NULL);
+
+  lv_obj_t *btn_del = lv_button_create(row);
+  lv_obj_set_size(btn_del, 132, 48);
+  lv_obj_set_style_bg_color(btn_del, lv_color_hex(0x8C2F2F), 0);
+  lv_obj_t *del_label = lv_label_create(btn_del);
+  lv_label_set_text(del_label, g_confirm_delete ? "确认删除" : "删除任务");
+  lv_obj_center(del_label);
+  lv_obj_add_event_cb(btn_del, on_action_delete, LV_EVENT_CLICKED, NULL);
+
+  lv_obj_t *btn_back = lv_button_create(scr);
+  lv_obj_set_size(btn_back, 140, 48);
+  lv_obj_align(btn_back, LV_ALIGN_BOTTOM_LEFT, 24, -24);
+  lv_obj_t *back_label = lv_label_create(btn_back);
+  lv_label_set_text(back_label, "返回");
+  lv_obj_center(back_label);
+  lv_obj_add_event_cb(btn_back, on_row_click_back, LV_EVENT_CLICKED, NULL);
+
+  lv_scr_load(scr);
+}
+
+/* ---------- 列表页 ---------- */
 
 static void build_row(lv_obj_t *parent, const velatime_task_t *task)
 {
@@ -53,12 +233,16 @@ static void build_row(lv_obj_t *parent, const velatime_task_t *task)
   lv_obj_set_width(row, LV_PCT(100));
   lv_obj_set_height(row, LV_SIZE_CONTENT);
   lv_obj_set_style_bg_color(row, lv_color_hex(0x1C2130), 0);
-  lv_obj_set_style_radius(row, 8, 0);
+  lv_obj_set_style_radius(row, 10, 0);
   lv_obj_set_style_border_width(row, 0, 0);
-  lv_obj_set_style_pad_all(row, 8, 0);
-  lv_obj_set_style_pad_row(row, 2, 0);
+  lv_obj_set_style_pad_all(row, 12, 0);
+  lv_obj_set_style_pad_row(row, 4, 0);
   lv_obj_set_flex_flow(row, LV_FLEX_FLOW_COLUMN);
   lv_obj_remove_flag(row, LV_OBJ_FLAG_SCROLLABLE);
+
+  /* 整行可点击：进入该任务的操作面板 */
+  lv_obj_add_flag(row, LV_OBJ_FLAG_CLICKABLE);
+  lv_obj_add_event_cb(row, on_row_click, LV_EVENT_CLICKED, (void *)task->id);
 
   lv_obj_t *title = lv_label_create(row);
   lv_label_set_text_fmt(title, "%s %s", status_icon(task), task->title);
@@ -69,14 +253,12 @@ static void build_row(lv_obj_t *parent, const velatime_task_t *task)
   lv_obj_t *meta = lv_label_create(row);
   if (task->deadline[0] != '\0')
     {
-      lv_label_set_text_fmt(meta, "%s · 截止 %s · 预计 %d 分钟",
-                            status_text(task), task->deadline,
-                            task->estimated_minutes);
+      lv_label_set_text_fmt(meta, "%s · 截止 %s · 点击可操作",
+                            status_text(task), task->deadline);
     }
   else
     {
-      lv_label_set_text_fmt(meta, "%s · 预计 %d 分钟",
-                            status_text(task), task->estimated_minutes);
+      lv_label_set_text_fmt(meta, "%s · 点击可操作", status_text(task));
     }
   lv_obj_set_style_text_color(meta, lv_color_hex(0x8890A0), 0);
   lv_obj_set_width(meta, LV_PCT(100));
@@ -89,6 +271,7 @@ void velatime_ui_tasks_show(void)
   int i;
   int waiting = 0;
   char summary[64];
+  lv_obj_t *list;
 
   lv_obj_t *scr = lv_obj_create(NULL);
   velatime_ui_style_screen(scr);
@@ -96,7 +279,7 @@ void velatime_ui_tasks_show(void)
   lv_obj_t *title = lv_label_create(scr);
   lv_label_set_text(title, "任务列表");
   lv_obj_set_style_text_color(title, lv_color_hex(0xFFFFFF), 0);
-  lv_obj_align(title, LV_ALIGN_TOP_LEFT, 16, 12);
+  lv_obj_align(title, LV_ALIGN_TOP_LEFT, 24, 16);
 
   for (i = 0; i < total; i++)
     {
@@ -111,17 +294,17 @@ void velatime_ui_tasks_show(void)
   lv_obj_t *subtitle = lv_label_create(scr);
   lv_label_set_text(subtitle, summary);
   lv_obj_set_style_text_color(subtitle, lv_color_hex(0x8890A0), 0);
-  lv_obj_align_to(subtitle, title, LV_ALIGN_OUT_BOTTOM_LEFT, 0, 6);
+  lv_obj_align_to(subtitle, title, LV_ALIGN_OUT_BOTTOM_LEFT, 0, 8);
 
-  lv_obj_t *list = lv_obj_create(scr);
-  lv_obj_set_size(list, 224, 200);
-  lv_obj_set_pos(list, 8, 76);
+  list = lv_obj_create(scr);
+  lv_obj_set_size(list, LV_PCT(72), LV_PCT(66));
   lv_obj_set_style_bg_opa(list, LV_OPA_TRANSP, 0);
   lv_obj_set_style_border_width(list, 0, 0);
   lv_obj_set_style_pad_all(list, 0, 0);
-  lv_obj_set_style_pad_row(list, 6, 0);
+  lv_obj_set_style_pad_row(list, 10, 0);
   lv_obj_set_flex_flow(list, LV_FLEX_FLOW_COLUMN);
   lv_obj_set_scroll_dir(list, LV_DIR_VER);
+  lv_obj_align_to(list, subtitle, LV_ALIGN_OUT_BOTTOM_LEFT, 0, 12);
 
   if (total <= 0)
     {
@@ -144,8 +327,8 @@ void velatime_ui_tasks_show(void)
     }
 
   lv_obj_t *btn_back = lv_button_create(scr);
-  lv_obj_set_size(btn_back, 100, 32);
-  lv_obj_align(btn_back, LV_ALIGN_BOTTOM_LEFT, 10, -10);
+  lv_obj_set_size(btn_back, 140, 48);
+  lv_obj_align(btn_back, LV_ALIGN_BOTTOM_LEFT, 24, -24);
   lv_obj_t *back_label = lv_label_create(btn_back);
   lv_label_set_text(back_label, "返回");
   lv_obj_center(back_label);

@@ -23,6 +23,15 @@ velatime_task_t *core_task_find(const char *id);
 /* 更新任务状态 */
 int core_task_set_status(const char *id, velatime_status_t status);
 
+/* 删除任务（后续任务前移以保持顺序）。成功返回 0，找不到返回 -1。 */
+int core_task_delete(const char *id);
+
+/* 更新任务的标题 / 截止时间 / 状态。
+   title 为 NULL 或空串表示不改标题；deadline 为 NULL 表示不改截止时间。
+   成功返回 0，找不到返回 -1。 */
+int core_task_update(const char *id, const char *title, const char *deadline,
+                     velatime_status_t status);
+
 /* 获取任务总数 */
 int core_task_count(void);
 

@@ -17,6 +17,7 @@ void velatime_ui_home_refresh(void);
 void velatime_ui_set_reminder(const char *text);
 void velatime_ui_schedule_show(void);
 void velatime_ui_tasks_show(void);
+void velatime_ui_task_actions_show(const char *task_id);
 void velatime_ui_popup_show(void);
 
 #endif /* VELATIME_UI_H */
