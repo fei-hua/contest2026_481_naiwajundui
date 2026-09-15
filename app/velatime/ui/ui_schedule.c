@@ -5,7 +5,7 @@
 
 #include <stdio.h>
 
-/* 课程表：显示当天课程与由课程间隙算出的空闲窗口 */
+/* 课程表：与其它页面共用统一布局度量（边距 32 / 内容等宽 1216 / 左对齐） */
 
 static void on_back_click(lv_event_t *e)
 {
@@ -17,25 +17,23 @@ static void build_course_row(lv_obj_t *parent, const velatime_course_t *course)
 {
   lv_obj_t *row = lv_obj_create(parent);
   lv_obj_set_width(row, LV_PCT(100));
-  lv_obj_set_height(row, LV_SIZE_CONTENT);
+  lv_obj_set_height(row, VELATIME_UI_ROW_H);
   lv_obj_set_style_bg_color(row, lv_color_hex(0x1C2130), 0);
-  lv_obj_set_style_radius(row, 8, 0);
+  lv_obj_set_style_radius(row, 12, 0);
   lv_obj_set_style_border_width(row, 0, 0);
-  lv_obj_set_style_pad_all(row, 8, 0);
-  lv_obj_set_style_pad_row(row, 2, 0);
+  lv_obj_set_style_pad_all(row, 16, 0);
+  lv_obj_set_style_pad_row(row, 4, 0);
   lv_obj_set_flex_flow(row, LV_FLEX_FLOW_COLUMN);
-  lv_obj_set_flex_align(row, LV_FLEX_ALIGN_START,
+  lv_obj_set_flex_align(row, LV_FLEX_ALIGN_CENTER,
                         LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
   lv_obj_remove_flag(row, LV_OBJ_FLAG_SCROLLABLE);
 
-  /* 课程名占满整行宽度并自动换行，避免长名字把时间挤出去 */
   lv_obj_t *name = lv_label_create(row);
   lv_label_set_text(name, course->name);
   lv_obj_set_style_text_color(name, lv_color_hex(0xFFFFFF), 0);
   lv_obj_set_width(name, LV_PCT(100));
-  lv_label_set_long_mode(name, LV_LABEL_LONG_WRAP);
+  lv_label_set_long_mode(name, LV_LABEL_LONG_DOT);
 
-  /* 时间 + 教室：单行省略显示，避免长教室名（校区/实验室全称）撑破布局 */
   lv_obj_t *detail = lv_label_create(row);
   if (course->room[0] != '\0')
     {
@@ -55,11 +53,12 @@ static void build_slot_row(lv_obj_t *parent, const velatime_free_slot_t *slot)
 {
   lv_obj_t *row = lv_obj_create(parent);
   lv_obj_set_width(row, LV_PCT(100));
-  lv_obj_set_height(row, LV_SIZE_CONTENT);
+  lv_obj_set_height(row, 60);
   lv_obj_set_style_bg_color(row, lv_color_hex(0x16301F), 0);
-  lv_obj_set_style_radius(row, 8, 0);
+  lv_obj_set_style_radius(row, 12, 0);
   lv_obj_set_style_border_width(row, 0, 0);
-  lv_obj_set_style_pad_all(row, 8, 0);
+  lv_obj_set_style_pad_left(row, 16, 0);
+  lv_obj_set_style_pad_right(row, 16, 0);
   lv_obj_set_flex_flow(row, LV_FLEX_FLOW_ROW);
   lv_obj_set_flex_align(row, LV_FLEX_ALIGN_SPACE_BETWEEN,
                         LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
@@ -82,6 +81,7 @@ void velatime_ui_schedule_show(void)
   int course_count = 0;
   int i;
   char summary[64];
+  lv_obj_t *list;
 
   lv_obj_t *scr = lv_obj_create(NULL);
   velatime_ui_style_screen(scr);
@@ -89,7 +89,7 @@ void velatime_ui_schedule_show(void)
   lv_obj_t *title = lv_label_create(scr);
   lv_label_set_text(title, "今日课程");
   lv_obj_set_style_text_color(title, lv_color_hex(0xFFFFFF), 0);
-  lv_obj_align(title, LV_ALIGN_TOP_LEFT, 16, 12);
+  lv_obj_align(title, LV_ALIGN_TOP_LEFT, VELATIME_UI_PAD, VELATIME_UI_PAD);
 
   for (i = 0; i < core_schedule_count(); i++)
     {
@@ -107,15 +107,15 @@ void velatime_ui_schedule_show(void)
   lv_obj_t *subtitle = lv_label_create(scr);
   lv_label_set_text(subtitle, summary);
   lv_obj_set_style_text_color(subtitle, lv_color_hex(0x8890A0), 0);
-  lv_obj_align_to(subtitle, title, LV_ALIGN_OUT_BOTTOM_LEFT, 0, 6);
+  lv_obj_align_to(subtitle, title, LV_ALIGN_OUT_BOTTOM_LEFT, 0, 8);
 
-  lv_obj_t *list = lv_obj_create(scr);
-  lv_obj_set_size(list, 224, 200);
-  lv_obj_set_pos(list, 8, 76);
+  list = lv_obj_create(scr);
+  lv_obj_set_size(list, VELATIME_UI_CONTENT_W, 520);
+  lv_obj_align_to(list, subtitle, LV_ALIGN_OUT_BOTTOM_LEFT, 0, 24);
   lv_obj_set_style_bg_opa(list, LV_OPA_TRANSP, 0);
   lv_obj_set_style_border_width(list, 0, 0);
   lv_obj_set_style_pad_all(list, 0, 0);
-  lv_obj_set_style_pad_row(list, 6, 0);
+  lv_obj_set_style_pad_row(list, 12, 0);
   lv_obj_set_flex_flow(list, LV_FLEX_FLOW_COLUMN);
   lv_obj_set_scroll_dir(list, LV_DIR_VER);
 
@@ -141,8 +141,8 @@ void velatime_ui_schedule_show(void)
     }
 
   lv_obj_t *btn_back = lv_button_create(scr);
-  lv_obj_set_size(btn_back, 100, 32);
-  lv_obj_align(btn_back, LV_ALIGN_BOTTOM_LEFT, 10, -10);
+  lv_obj_set_size(btn_back, VELATIME_UI_BTN_W, VELATIME_UI_BTN_H);
+  lv_obj_align(btn_back, LV_ALIGN_BOTTOM_LEFT, VELATIME_UI_PAD, -VELATIME_UI_PAD);
   lv_obj_t *back_label = lv_label_create(btn_back);
   lv_label_set_text(back_label, "返回");
   lv_obj_center(back_label);

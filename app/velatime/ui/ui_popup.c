@@ -37,14 +37,14 @@ void velatime_ui_popup_show(void)
   velatime_ui_style_screen(scr);
 
   lv_obj_t *card = lv_obj_create(scr);
-  /* 按屏幕比例自适应：模拟器是 1280x800，固定像素会显得极小 */
-  lv_obj_set_size(card, LV_PCT(58), LV_PCT(52));
+  /* 与其它页面统一：固定尺寸居中、内边距 24、按钮 200x64 */
+  lv_obj_set_size(card, 760, 420);
   lv_obj_center(card);
   lv_obj_set_style_bg_color(card, lv_color_hex(0x1C2130), 0);
   lv_obj_set_style_radius(card, 16, 0);
   lv_obj_set_style_border_width(card, 0, 0);
-  lv_obj_set_style_pad_all(card, 24, 0);
-  lv_obj_set_style_pad_row(card, 12, 0);
+  lv_obj_set_style_pad_all(card, VELATIME_UI_PAD_CARD, 0);
+  lv_obj_set_style_pad_row(card, 16, 0);
   lv_obj_set_flex_flow(card, LV_FLEX_FLOW_COLUMN);
   lv_obj_set_flex_align(card, LV_FLEX_ALIGN_SPACE_EVENLY,
                         LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
@@ -99,14 +99,14 @@ void velatime_ui_popup_show(void)
   lv_obj_remove_flag(row, LV_OBJ_FLAG_SCROLLABLE);
 
   lv_obj_t *btn_start = lv_button_create(row);
-  lv_obj_set_size(btn_start, 132, 44);
+  lv_obj_set_size(btn_start, VELATIME_UI_BTN_W, VELATIME_UI_BTN_H);
   lv_obj_t *start_label = lv_label_create(btn_start);
   lv_label_set_text(start_label, "现在开始");
   lv_obj_center(start_label);
   lv_obj_add_event_cb(btn_start, on_start_click, LV_EVENT_CLICKED, NULL);
 
   lv_obj_t *btn_close = lv_button_create(row);
-  lv_obj_set_size(btn_close, 132, 44);
+  lv_obj_set_size(btn_close, VELATIME_UI_BTN_W, VELATIME_UI_BTN_H);
   lv_obj_t *close_label = lv_label_create(btn_close);
   lv_label_set_text(close_label, "稍后再说");
   lv_obj_center(close_label);
