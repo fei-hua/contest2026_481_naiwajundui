@@ -142,22 +142,22 @@ void velatime_ui_home_show(void)
   lv_obj_t *title = lv_label_create(scr);
   lv_label_set_text(title, "VelaTime");
   lv_obj_set_style_text_color(title, lv_color_hex(0xFFFFFF), 0);
-  lv_obj_align(title, LV_ALIGN_TOP_LEFT, 16, 12);
+  lv_obj_align(title, LV_ALIGN_TOP_LEFT, 24, 16);
 
   lv_obj_t *subtitle = lv_label_create(scr);
-  lv_label_set_text(subtitle, "Now recommended:");
+  lv_label_set_text(subtitle, "现在推荐");
   lv_obj_set_style_text_color(subtitle, lv_color_hex(0x8890A0), 0);
   lv_obj_align_to(subtitle, title, LV_ALIGN_OUT_BOTTOM_LEFT, 0, 8);
 
-  /* 卡片：flex 纵向布局，内容超宽自动换行，不再溢出/出现横向滚动条 */
+  /* 卡片：按屏幕比例布局（模拟器 1280x800），flex 纵向排列，长文本自动换行 */
   lv_obj_t *card = lv_obj_create(scr);
-  lv_obj_set_size(card, 212, 150);
-  lv_obj_set_pos(card, 14, 66);
+  lv_obj_set_size(card, LV_PCT(56), LV_PCT(60));
+  lv_obj_align_to(card, subtitle, LV_ALIGN_OUT_BOTTOM_LEFT, 0, 16);
   lv_obj_set_style_bg_color(card, lv_color_hex(0x1C2130), 0);
-  lv_obj_set_style_radius(card, 12, 0);
+  lv_obj_set_style_radius(card, 16, 0);
   lv_obj_set_style_border_width(card, 0, 0);
-  lv_obj_set_style_pad_all(card, 10, 0);
-  lv_obj_set_style_pad_row(card, 4, 0);
+  lv_obj_set_style_pad_all(card, 24, 0);
+  lv_obj_set_style_pad_row(card, 14, 0);
   lv_obj_set_flex_flow(card, LV_FLEX_FLOW_COLUMN);
   lv_obj_set_flex_align(card, LV_FLEX_ALIGN_START,
                         LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
@@ -165,6 +165,7 @@ void velatime_ui_home_show(void)
 
   g_card_title = lv_label_create(card);
   lv_obj_set_style_text_color(g_card_title, lv_color_hex(0xFFFFFF), 0);
+  /* 大标题字体：待子集字库就位后启用 VELATIME_FONT_CN24 */
   lv_obj_set_width(g_card_title, LV_PCT(100));
   lv_label_set_long_mode(g_card_title, LV_LABEL_LONG_WRAP);
 
@@ -190,14 +191,14 @@ void velatime_ui_home_show(void)
   lv_obj_remove_flag(btn_row, LV_OBJ_FLAG_SCROLLABLE);
 
   g_btn_start = lv_button_create(btn_row);
-  lv_obj_set_size(g_btn_start, 80, 34);
+  lv_obj_set_size(g_btn_start, 150, 56);
   lv_obj_t *start_label = lv_label_create(g_btn_start);
   lv_label_set_text(start_label, "Start");
   lv_obj_center(start_label);
   lv_obj_add_event_cb(g_btn_start, on_start_click, LV_EVENT_CLICKED, NULL);
 
   g_btn_delay = lv_button_create(btn_row);
-  lv_obj_set_size(g_btn_delay, 80, 34);
+  lv_obj_set_size(g_btn_delay, 150, 56);
   lv_obj_t *delay_label = lv_label_create(g_btn_delay);
   lv_label_set_text(delay_label, "Delay");
   lv_obj_center(delay_label);
@@ -206,12 +207,12 @@ void velatime_ui_home_show(void)
   g_status_label = lv_label_create(scr);
   lv_label_set_text(g_status_label, "");
   lv_obj_set_style_text_color(g_status_label, lv_color_hex(0x00D26A), 0);
-  lv_obj_align(g_status_label, LV_ALIGN_BOTTOM_MID, 0, -48);
+  lv_obj_align(g_status_label, LV_ALIGN_BOTTOM_MID, 0, -92);
 
   /* 底部导航：课程表 / 任务列表 */
   lv_obj_t *nav = lv_obj_create(scr);
-  lv_obj_set_size(nav, 224, 40);
-  lv_obj_align(nav, LV_ALIGN_BOTTOM_MID, 0, -4);
+  lv_obj_set_size(nav, LV_PCT(60), 64);
+  lv_obj_align(nav, LV_ALIGN_BOTTOM_MID, 0, -16);
   lv_obj_set_style_bg_opa(nav, LV_OPA_TRANSP, 0);
   lv_obj_set_style_border_width(nav, 0, 0);
   lv_obj_set_style_pad_all(nav, 0, 0);
@@ -221,14 +222,14 @@ void velatime_ui_home_show(void)
   lv_obj_remove_flag(nav, LV_OBJ_FLAG_SCROLLABLE);
 
   lv_obj_t *btn_sched = lv_button_create(nav);
-  lv_obj_set_size(btn_sched, 100, 32);
+  lv_obj_set_size(btn_sched, 200, 52);
   lv_obj_t *sched_label = lv_label_create(btn_sched);
   lv_label_set_text(sched_label, "课程表");
   lv_obj_center(sched_label);
   lv_obj_add_event_cb(btn_sched, on_schedule_click, LV_EVENT_CLICKED, NULL);
 
   lv_obj_t *btn_tasks = lv_button_create(nav);
-  lv_obj_set_size(btn_tasks, 100, 32);
+  lv_obj_set_size(btn_tasks, 200, 52);
   lv_obj_t *tasks_label = lv_label_create(btn_tasks);
   lv_label_set_text(tasks_label, "任务列表");
   lv_obj_center(tasks_label);
