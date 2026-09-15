@@ -7,9 +7,9 @@
 #include <stdio.h>
 #include <string.h>
 
-/* 任务列表：显示全部任务；点某一行进入"完成 / 延后 / 删除"操作面板 */
+/* 任务列表：与其它页面共用统一布局度量；点某一行进入"完成/延后/删除"面板 */
 
-static void on_row_click_back(lv_event_t *e);
+static void on_actions_back(lv_event_t *e);
 
 static const char *status_icon(const velatime_task_t *task)
 {
@@ -37,14 +37,13 @@ static uint32_t status_color(const velatime_task_t *task)
 {
   switch (task->status)
     {
-      case VELATIME_STATUS_DONE:      return 0x6B7280;   /* 灰 */
-      case VELATIME_STATUS_DOING:     return 0x00D26A;   /* 绿 */
-      case VELATIME_STATUS_POSTPONED: return 0xF0B429;   /* 黄 */
-      default:                        return 0xFFFFFF;   /* 白 */
+      case VELATIME_STATUS_DONE:      return 0x6B7280;
+      case VELATIME_STATUS_DOING:     return 0x00D26A;
+      case VELATIME_STATUS_POSTPONED: return 0xF0B429;
+      default:                        return 0xFFFFFF;
     }
 }
 
-/* 当前操作的任务 id（用 id 而不是下标，避免改动后指错） */
 static char g_active_id[VELATIME_MAX_ID];
 static int g_confirm_delete;
 
@@ -66,6 +65,7 @@ static void on_action_complete(lv_event_t *e)
       printf("VelaTime: task completed\n");
       fflush(stdout);
     }
+  g_confirm_delete = 0;
   velatime_ui_tasks_show();
 }
 
@@ -79,6 +79,7 @@ static void on_action_postpone(lv_event_t *e)
       printf("VelaTime: task postponed\n");
       fflush(stdout);
     }
+  g_confirm_delete = 0;
   velatime_ui_tasks_show();
 }
 
@@ -127,7 +128,7 @@ static void on_row_click(lv_event_t *e)
   velatime_ui_task_actions_show(g_active_id);
 }
 
-static void on_row_click_back(lv_event_t *e)
+static void on_actions_back(lv_event_t *e)
 {
   (void)e;
   g_confirm_delete = 0;
@@ -138,19 +139,21 @@ void velatime_ui_task_actions_show(const char *task_id)
 {
   const velatime_task_t *t = core_task_find(task_id);
   char detail[128];
+  lv_obj_t *scr;
+  lv_obj_t *card;
   lv_obj_t *row;
 
-  lv_obj_t *scr = lv_obj_create(NULL);
+  scr = lv_obj_create(NULL);
   velatime_ui_style_screen(scr);
 
-  lv_obj_t *card = lv_obj_create(scr);
-  lv_obj_set_size(card, LV_PCT(64), LV_PCT(56));
+  card = lv_obj_create(scr);
+  lv_obj_set_size(card, 700, 380);
   lv_obj_center(card);
   lv_obj_set_style_bg_color(card, lv_color_hex(0x1C2130), 0);
   lv_obj_set_style_radius(card, 16, 0);
   lv_obj_set_style_border_width(card, 0, 0);
-  lv_obj_set_style_pad_all(card, 24, 0);
-  lv_obj_set_style_pad_row(card, 12, 0);
+  lv_obj_set_style_pad_all(card, VELATIME_UI_PAD_CARD, 0);
+  lv_obj_set_style_pad_row(card, 16, 0);
   lv_obj_set_flex_flow(card, LV_FLEX_FLOW_COLUMN);
   lv_obj_set_flex_align(card, LV_FLEX_ALIGN_SPACE_EVENLY,
                         LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
@@ -173,7 +176,8 @@ void velatime_ui_task_actions_show(const char *task_id)
     }
   else
     {
-      snprintf(detail, sizeof(detail), "%s", (t != NULL) ? status_text(t) : "-");
+      snprintf(detail, sizeof(detail), "%s",
+               (t != NULL) ? status_text(t) : "-");
     }
 
   lv_obj_t *meta = lv_label_create(card);
@@ -186,28 +190,28 @@ void velatime_ui_task_actions_show(const char *task_id)
   lv_obj_set_style_bg_opa(row, LV_OPA_TRANSP, 0);
   lv_obj_set_style_border_width(row, 0, 0);
   lv_obj_set_style_pad_all(row, 0, 0);
-  lv_obj_set_style_pad_column(row, 16, 0);
+  lv_obj_set_style_pad_column(row, 20, 0);
   lv_obj_set_flex_flow(row, LV_FLEX_FLOW_ROW);
   lv_obj_set_flex_align(row, LV_FLEX_ALIGN_CENTER,
                         LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
   lv_obj_remove_flag(row, LV_OBJ_FLAG_SCROLLABLE);
 
   lv_obj_t *btn_done = lv_button_create(row);
-  lv_obj_set_size(btn_done, 132, 48);
+  lv_obj_set_size(btn_done, VELATIME_UI_BTN_W, VELATIME_UI_BTN_H);
   lv_obj_t *done_label = lv_label_create(btn_done);
   lv_label_set_text(done_label, "标为完成");
   lv_obj_center(done_label);
   lv_obj_add_event_cb(btn_done, on_action_complete, LV_EVENT_CLICKED, NULL);
 
   lv_obj_t *btn_later = lv_button_create(row);
-  lv_obj_set_size(btn_later, 132, 48);
+  lv_obj_set_size(btn_later, VELATIME_UI_BTN_W, VELATIME_UI_BTN_H);
   lv_obj_t *later_label = lv_label_create(btn_later);
   lv_label_set_text(later_label, "延后处理");
   lv_obj_center(later_label);
   lv_obj_add_event_cb(btn_later, on_action_postpone, LV_EVENT_CLICKED, NULL);
 
   lv_obj_t *btn_del = lv_button_create(row);
-  lv_obj_set_size(btn_del, 132, 48);
+  lv_obj_set_size(btn_del, VELATIME_UI_BTN_W, VELATIME_UI_BTN_H);
   lv_obj_set_style_bg_color(btn_del, lv_color_hex(0x8C2F2F), 0);
   lv_obj_t *del_label = lv_label_create(btn_del);
   lv_label_set_text(del_label, g_confirm_delete ? "确认删除" : "删除任务");
@@ -215,12 +219,12 @@ void velatime_ui_task_actions_show(const char *task_id)
   lv_obj_add_event_cb(btn_del, on_action_delete, LV_EVENT_CLICKED, NULL);
 
   lv_obj_t *btn_back = lv_button_create(scr);
-  lv_obj_set_size(btn_back, 140, 48);
-  lv_obj_align(btn_back, LV_ALIGN_BOTTOM_LEFT, 24, -24);
+  lv_obj_set_size(btn_back, VELATIME_UI_BTN_W, VELATIME_UI_BTN_H);
+  lv_obj_align(btn_back, LV_ALIGN_BOTTOM_LEFT, VELATIME_UI_PAD, -VELATIME_UI_PAD);
   lv_obj_t *back_label = lv_label_create(btn_back);
   lv_label_set_text(back_label, "返回");
   lv_obj_center(back_label);
-  lv_obj_add_event_cb(btn_back, on_row_click_back, LV_EVENT_CLICKED, NULL);
+  lv_obj_add_event_cb(btn_back, on_actions_back, LV_EVENT_CLICKED, NULL);
 
   lv_scr_load(scr);
 }
@@ -231,13 +235,15 @@ static void build_row(lv_obj_t *parent, const velatime_task_t *task)
 {
   lv_obj_t *row = lv_obj_create(parent);
   lv_obj_set_width(row, LV_PCT(100));
-  lv_obj_set_height(row, LV_SIZE_CONTENT);
+  lv_obj_set_height(row, VELATIME_UI_ROW_H);
   lv_obj_set_style_bg_color(row, lv_color_hex(0x1C2130), 0);
-  lv_obj_set_style_radius(row, 10, 0);
+  lv_obj_set_style_radius(row, 12, 0);
   lv_obj_set_style_border_width(row, 0, 0);
-  lv_obj_set_style_pad_all(row, 12, 0);
+  lv_obj_set_style_pad_all(row, 16, 0);
   lv_obj_set_style_pad_row(row, 4, 0);
   lv_obj_set_flex_flow(row, LV_FLEX_FLOW_COLUMN);
+  lv_obj_set_flex_align(row, LV_FLEX_ALIGN_CENTER,
+                        LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
   lv_obj_remove_flag(row, LV_OBJ_FLAG_SCROLLABLE);
 
   /* 整行可点击：进入该任务的操作面板 */
@@ -248,7 +254,7 @@ static void build_row(lv_obj_t *parent, const velatime_task_t *task)
   lv_label_set_text_fmt(title, "%s %s", status_icon(task), task->title);
   lv_obj_set_style_text_color(title, lv_color_hex(status_color(task)), 0);
   lv_obj_set_width(title, LV_PCT(100));
-  lv_label_set_long_mode(title, LV_LABEL_LONG_WRAP);
+  lv_label_set_long_mode(title, LV_LABEL_LONG_DOT);
 
   lv_obj_t *meta = lv_label_create(row);
   if (task->deadline[0] != '\0')
@@ -262,7 +268,7 @@ static void build_row(lv_obj_t *parent, const velatime_task_t *task)
     }
   lv_obj_set_style_text_color(meta, lv_color_hex(0x8890A0), 0);
   lv_obj_set_width(meta, LV_PCT(100));
-  lv_label_set_long_mode(meta, LV_LABEL_LONG_WRAP);
+  lv_label_set_long_mode(meta, LV_LABEL_LONG_DOT);
 }
 
 void velatime_ui_tasks_show(void)
@@ -271,15 +277,16 @@ void velatime_ui_tasks_show(void)
   int i;
   int waiting = 0;
   char summary[64];
+  lv_obj_t *scr;
   lv_obj_t *list;
 
-  lv_obj_t *scr = lv_obj_create(NULL);
+  scr = lv_obj_create(NULL);
   velatime_ui_style_screen(scr);
 
   lv_obj_t *title = lv_label_create(scr);
   lv_label_set_text(title, "任务列表");
   lv_obj_set_style_text_color(title, lv_color_hex(0xFFFFFF), 0);
-  lv_obj_align(title, LV_ALIGN_TOP_LEFT, 24, 16);
+  lv_obj_align(title, LV_ALIGN_TOP_LEFT, VELATIME_UI_PAD, VELATIME_UI_PAD);
 
   for (i = 0; i < total; i++)
     {
@@ -297,14 +304,14 @@ void velatime_ui_tasks_show(void)
   lv_obj_align_to(subtitle, title, LV_ALIGN_OUT_BOTTOM_LEFT, 0, 8);
 
   list = lv_obj_create(scr);
-  lv_obj_set_size(list, LV_PCT(72), LV_PCT(66));
+  lv_obj_set_size(list, VELATIME_UI_CONTENT_W, 520);
+  lv_obj_align_to(list, subtitle, LV_ALIGN_OUT_BOTTOM_LEFT, 0, 24);
   lv_obj_set_style_bg_opa(list, LV_OPA_TRANSP, 0);
   lv_obj_set_style_border_width(list, 0, 0);
   lv_obj_set_style_pad_all(list, 0, 0);
-  lv_obj_set_style_pad_row(list, 10, 0);
+  lv_obj_set_style_pad_row(list, 12, 0);
   lv_obj_set_flex_flow(list, LV_FLEX_FLOW_COLUMN);
   lv_obj_set_scroll_dir(list, LV_DIR_VER);
-  lv_obj_align_to(list, subtitle, LV_ALIGN_OUT_BOTTOM_LEFT, 0, 12);
 
   if (total <= 0)
     {
@@ -327,8 +334,8 @@ void velatime_ui_tasks_show(void)
     }
 
   lv_obj_t *btn_back = lv_button_create(scr);
-  lv_obj_set_size(btn_back, 140, 48);
-  lv_obj_align(btn_back, LV_ALIGN_BOTTOM_LEFT, 24, -24);
+  lv_obj_set_size(btn_back, VELATIME_UI_BTN_W, VELATIME_UI_BTN_H);
+  lv_obj_align(btn_back, LV_ALIGN_BOTTOM_LEFT, VELATIME_UI_PAD, -VELATIME_UI_PAD);
   lv_obj_t *back_label = lv_label_create(btn_back);
   lv_label_set_text(back_label, "返回");
   lv_obj_center(back_label);

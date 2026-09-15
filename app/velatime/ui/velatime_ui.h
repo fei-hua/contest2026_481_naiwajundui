@@ -4,9 +4,25 @@
 #include <lvgl/lvgl.h>
 
 /* VelaTime 自带中文字库（GB2312 一级汉字 + ASCII），见 ui/velatime_font_cn.c
- * 说明：16px 用于正文；如需更大字号，可生成 velatime_font_cn52 并在此声明 */
+ * 说明：16px 用于全部正文；如需更大字号需改用"常用字子集"方案 */
 extern const lv_font_t velatime_font_cn;
 #define VELATIME_FONT_CN (&velatime_font_cn)
+
+/* ------------------------------------------------------------------
+ * 统一布局度量（模拟器屏幕固定 1280x800）
+ * 所有页面共用这一套，保证边距、对齐、控件尺寸一致：
+ *   - 页面左右边距 32，内容整体左对齐并等宽
+ *   - 卡片内边距 24
+ *   - 主按钮 200x64
+ * ------------------------------------------------------------------ */
+#define VELATIME_UI_SCREEN_W    1280
+#define VELATIME_UI_SCREEN_H    800
+#define VELATIME_UI_PAD         32     /* 页面边距 */
+#define VELATIME_UI_PAD_CARD    24     /* 卡片内边距 */
+#define VELATIME_UI_CONTENT_W   (VELATIME_UI_SCREEN_W - VELATIME_UI_PAD * 2)  /* 1216 */
+#define VELATIME_UI_BTN_W       200
+#define VELATIME_UI_BTN_H       64
+#define VELATIME_UI_ROW_H       76     /* 列表行高 */
 
 /* 各页面共用的根对象样式（底色 / 字体 / 滚动），见 ui/ui_theme.c */
 void velatime_ui_style_screen(lv_obj_t *scr);
