@@ -31,7 +31,7 @@ static void apply_reminder_text(void)
   else
     {
       velatime_recomm_book_t rec;
-      int has_rec = core_recommend_pick(1, &rec);
+      int has_rec = core_recommend_pick(core_recommend_today_weekday(), &rec);
       lv_label_set_text(g_card_reason,
                         has_rec ? rec.reason : "Add tasks to get started");
     }
@@ -49,14 +49,6 @@ void velatime_ui_set_reminder(const char *text)
   apply_reminder_text();
 }
 
-static void style_screen(lv_obj_t *scr)
-{
-  lv_obj_set_style_bg_color(scr, lv_color_hex(0x10131A), 0);
-  /* 根对象设字体，子控件继承：中文用自带字库，ASCII 也在同一字库内 */
-  lv_obj_set_style_text_font(scr, &velatime_font_cn, 0);
-  lv_obj_remove_flag(scr, LV_OBJ_FLAG_SCROLLABLE);
-}
-
 void velatime_ui_home_refresh(void)
 {
   velatime_recomm_book_t rec;
@@ -69,7 +61,7 @@ void velatime_ui_home_refresh(void)
       return;
     }
 
-  has_rec = core_recommend_pick(1, &rec);
+  has_rec = core_recommend_pick(core_recommend_today_weekday(), &rec);
   lv_label_set_text(g_card_title,
                     has_rec ? rec.task_title : "No recommendation");
 
@@ -101,7 +93,7 @@ static void on_start_click(lv_event_t *e)
   velatime_recomm_book_t rec;
   (void)e;
 
-  if (core_recommend_pick(1, &rec))
+  if (core_recommend_pick(core_recommend_today_weekday(), &rec))
     {
       core_task_set_status(rec.task_id, VELATIME_STATUS_DOING);
       if (g_status_label != NULL)
@@ -118,7 +110,7 @@ static void on_delay_click(lv_event_t *e)
   velatime_recomm_book_t rec;
   (void)e;
 
-  if (core_recommend_pick(1, &rec))
+  if (core_recommend_pick(core_recommend_today_weekday(), &rec))
     {
       core_task_set_status(rec.task_id, VELATIME_STATUS_POSTPONED);
       if (g_status_label != NULL)
@@ -130,6 +122,18 @@ static void on_delay_click(lv_event_t *e)
     }
 }
 
+static void on_schedule_click(lv_event_t *e)
+{
+  (void)e;
+  velatime_ui_schedule_show();
+}
+
+static void on_tasks_click(lv_event_t *e)
+{
+  (void)e;
+  velatime_ui_tasks_show();
+}
+
 void velatime_ui_init(void)
 {
 }
@@ -137,7 +141,7 @@ void velatime_ui_init(void)
 void velatime_ui_home_show(void)
 {
   lv_obj_t *scr = lv_obj_create(NULL);
-  style_screen(scr);
+  velatime_ui_style_screen(scr);
 
   lv_obj_t *title = lv_label_create(scr);
   lv_label_set_text(title, "VelaTime");
@@ -206,7 +210,33 @@ void velatime_ui_home_show(void)
   g_status_label = lv_label_create(scr);
   lv_label_set_text(g_status_label, "");
   lv_obj_set_style_text_color(g_status_label, lv_color_hex(0x00D26A), 0);
-  lv_obj_align(g_status_label, LV_ALIGN_BOTTOM_MID, 0, -12);
+  lv_obj_align(g_status_label, LV_ALIGN_BOTTOM_MID, 0, -48);
+
+  /* 底部导航：课程表 / 任务列表 */
+  lv_obj_t *nav = lv_obj_create(scr);
+  lv_obj_set_size(nav, 224, 40);
+  lv_obj_align(nav, LV_ALIGN_BOTTOM_MID, 0, -4);
+  lv_obj_set_style_bg_opa(nav, LV_OPA_TRANSP, 0);
+  lv_obj_set_style_border_width(nav, 0, 0);
+  lv_obj_set_style_pad_all(nav, 0, 0);
+  lv_obj_set_flex_flow(nav, LV_FLEX_FLOW_ROW);
+  lv_obj_set_flex_align(nav, LV_FLEX_ALIGN_SPACE_EVENLY,
+                        LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+  lv_obj_remove_flag(nav, LV_OBJ_FLAG_SCROLLABLE);
+
+  lv_obj_t *btn_sched = lv_button_create(nav);
+  lv_obj_set_size(btn_sched, 100, 32);
+  lv_obj_t *sched_label = lv_label_create(btn_sched);
+  lv_label_set_text(sched_label, "课程表");
+  lv_obj_center(sched_label);
+  lv_obj_add_event_cb(btn_sched, on_schedule_click, LV_EVENT_CLICKED, NULL);
+
+  lv_obj_t *btn_tasks = lv_button_create(nav);
+  lv_obj_set_size(btn_tasks, 100, 32);
+  lv_obj_t *tasks_label = lv_label_create(btn_tasks);
+  lv_label_set_text(tasks_label, "任务列表");
+  lv_obj_center(tasks_label);
+  lv_obj_add_event_cb(btn_tasks, on_tasks_click, LV_EVENT_CLICKED, NULL);
 
   velatime_ui_home_refresh();
   lv_scr_load(scr);

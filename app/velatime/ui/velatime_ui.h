@@ -7,6 +7,9 @@
 extern const lv_font_t velatime_font_cn;
 #define VELATIME_FONT_CN (&velatime_font_cn)
 
+/* 各页面共用的根对象样式（底色 / 字体 / 滚动），见 ui/ui_theme.c */
+void velatime_ui_style_screen(lv_obj_t *scr);
+
 void velatime_ui_init(void);
 void velatime_ui_home_show(void);
 void velatime_ui_home_refresh(void);

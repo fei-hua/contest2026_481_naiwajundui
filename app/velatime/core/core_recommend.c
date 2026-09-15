@@ -16,6 +16,29 @@
 
 #define URGENCY_OVERDUE_MIN (-1440)   /* 逾期一天内仍按重度紧急；更久则降级 */
 
+/*
+ * 取当前星期，映射到 VelaTime 的约定：1=周一 … 7=周日。
+ * 之前调用方硬编码传 1，导致周末取不到空闲窗口、推荐退化。
+ */
+int core_recommend_today_weekday(void)
+{
+  struct timespec ts;
+  struct tm now_tm;
+
+  if (clock_gettime(CLOCK_REALTIME, &ts) != 0)
+    {
+      return 1;
+    }
+
+  if (localtime_r(&ts.tv_sec, &now_tm) == NULL)
+    {
+      return 1;
+    }
+
+  /* tm_wday: 0=周日 … 6=周六 */
+  return (now_tm.tm_wday == 0) ? 7 : now_tm.tm_wday;
+}
+
 static int priority_score(const char *priority)
 {
   if (strcmp(priority, "high") == 0)

@@ -18,4 +18,7 @@ typedef struct
 /* 根据当前空闲窗口选出一个推荐任务。返回 1 有推荐，0 没有。 */
 int core_recommend_pick(int weekday, velatime_recomm_book_t *out);
 
+/* 当前星期，1=周一 … 7=周日（调用方不要再硬编码 weekday）。 */
+int core_recommend_today_weekday(void);
+
 #endif /* VELATIME_CORE_RECOMMEND_H */
