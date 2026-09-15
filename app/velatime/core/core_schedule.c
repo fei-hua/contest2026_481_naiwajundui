@@ -3,6 +3,10 @@
 #include <string.h>
 #include <stdio.h>
 
+/* 一天的可安排区间：08:00 到 22:00 */
+#define DAY_BEGIN_MIN (8 * 60)
+#define DAY_END_MIN   (22 * 60)
+
 static velatime_course_t s_courses[VELATIME_MAX_COURSES];
 static int s_count = 0;
 
@@ -45,33 +49,127 @@ const velatime_course_t *core_schedule_get(int index)
   return &s_courses[index];
 }
 
-int core_schedule_free_slots(int weekday, velatime_free_slot_t *out, int out_max)
+/* 把 "HH:MM" 转成当天分钟数；非法输入返回 -1 */
+static int time_to_minutes(const char *hhmm)
 {
-  /* 简化实现：把当天课程按开始时间排好，课程间隙即空闲窗口。
-     这里按默认数据（每天最多 2 门课）算出间隙。 */
-  int i;
-  int added = 0;
+  int h, m;
 
-  /* 晚餐/大块时间用固定窗口：先给一个 12:00-14:00 当作午休空闲 */
-  if (weekday >= 1 && weekday <= 5 && added < out_max)
+  if (hhmm == NULL || sscanf(hhmm, "%d:%d", &h, &m) != 2)
     {
-      strncpy(out[added].start, "12:00", 8);
-      out[added].start[7] = '\0';
-      strncpy(out[added].end, "14:00", 8);
-      out[added].end[7] = '\0';
-      out[added].minutes = 120;
-      added++;
+      return -1;
     }
 
-  /* 课程间隙 */
-  for (i = 0; i < s_count; i++)
+  if (h < 0 || h > 23 || m < 0 || m > 59)
+    {
+      return -1;
+    }
+
+  return h * 60 + m;
+}
+
+/* 分钟数写回 "HH:MM"（每天最多 24 小时，缓冲区至少 6 字节） */
+static void minutes_to_time(int minutes, char *out)
+{
+  if (minutes < 0)
+    {
+      minutes = 0;
+    }
+  if (minutes > 23 * 60 + 59)
+    {
+      minutes = 23 * 60 + 59;
+    }
+
+  snprintf(out, 6, "%02d:%02d", minutes / 60, minutes % 60);
+}
+
+/* 收集当天课程区间，按起始时间排序（简单选择排序，课程数很少） */
+static int collect_busy(int weekday, int *begin, int *end, int max)
+{
+  int i;
+  int n = 0;
+  int a, b;
+
+  for (i = 0; i < s_count && n < max; i++)
     {
       if (s_courses[i].weekday != weekday)
         {
           continue;
         }
-      /* 简单起见：取当天第一门课结束到下午的空闲，演示用。
-         真正实现应排序后逐对算间隙。 */
+
+      a = time_to_minutes(s_courses[i].start);
+      b = time_to_minutes(s_courses[i].end);
+      if (a < 0 || b < 0 || b <= a)
+        {
+          continue;
+        }
+
+      begin[n] = a;
+      end[n] = b;
+      n++;
+    }
+
+  for (a = 0; a < n; a++)
+    {
+      for (b = a + 1; b < n; b++)
+        {
+          if (begin[b] < begin[a])
+            {
+              int t;
+
+              t = begin[a]; begin[a] = begin[b]; begin[b] = t;
+              t = end[a];   end[a]   = end[b];   end[b]   = t;
+            }
+        }
+    }
+
+  return n;
+}
+
+int core_schedule_free_slots(int weekday, velatime_free_slot_t *out, int out_max)
+{
+  int busy_begin[VELATIME_MAX_COURSES];
+  int busy_end[VELATIME_MAX_COURSES];
+  int busy_count;
+  int added = 0;
+  int cursor;
+  int i;
+
+  if (out == NULL || out_max <= 0)
+    {
+      return 0;
+    }
+
+  busy_count = collect_busy(weekday, busy_begin, busy_end, VELATIME_MAX_COURSES);
+
+  /* 从一天的起点开始，逐段跳过课程，剩下的就是空闲窗口 */
+  cursor = DAY_BEGIN_MIN;
+
+  for (i = 0; i < busy_count && added < out_max; i++)
+    {
+      int gap = busy_begin[i] - cursor;
+
+      /* 小于 30 分钟的缝隙不算"可安排的空闲" */
+      if (gap >= 30)
+        {
+          minutes_to_time(cursor, out[added].start);
+          minutes_to_time(busy_begin[i], out[added].end);
+          out[added].minutes = gap;
+          added++;
+        }
+
+      if (busy_end[i] > cursor)
+        {
+          cursor = busy_end[i];
+        }
+    }
+
+  /* 最后一门课之后到一天的终点 */
+  if (added < out_max && (DAY_END_MIN - cursor) >= 30)
+    {
+      minutes_to_time(cursor, out[added].start);
+      minutes_to_time(DAY_END_MIN, out[added].end);
+      out[added].minutes = DAY_END_MIN - cursor;
+      added++;
     }
 
   return added;

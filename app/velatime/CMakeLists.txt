@@ -16,6 +16,7 @@ if(CONFIG_EXAMPLES_VELATIME)
     core/core_schedule.c
     core/core_recommend.c
     core/core_agent_sync.c
+    ui/ui_theme.c
     ui/ui_mock.c
     ui/ui_home.c
     ui/ui_schedule.c
