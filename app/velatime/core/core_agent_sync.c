@@ -462,3 +462,64 @@ int core_agent_reminder_local(const char *title, const char *reason,
   printf("VelaTime: proactive reminder (on-device): %s\n", out);
   return 0;
 }
+
+/* ------------------------------------------------------------------ */
+/* 任务落盘：把内存里的任务写回 TASKS.md                                */
+/* 目的：应用侧的状态变更（开始 / 延后）重启后不丢，且与 Agent 共用同一份 */
+/* 文件格式，两边谁改都能被对方读到。                                   */
+/* ------------------------------------------------------------------ */
+
+int core_agent_sync_save(void)
+{
+  FILE *fp;
+  int total = core_task_count();
+  int i;
+
+  if (create_directory(AGENT_DATA_DIR) < 0)
+    {
+      return -1;
+    }
+
+  fp = fopen(AGENT_TASKS_FILE, "w");
+  if (fp == NULL)
+    {
+      printf("VelaTime: cannot write %s, errno=%d\n", AGENT_TASKS_FILE, errno);
+      return -1;
+    }
+
+  for (i = 0; i < total; i++)
+    {
+      const velatime_task_t *t = core_task_get(i);
+      const char *mark;
+
+      if (t == NULL)
+        {
+          continue;
+        }
+
+      mark = (t->status == VELATIME_STATUS_DONE) ? "x" : " ";
+
+      if (t->deadline[0] != '\0')
+        {
+          fprintf(fp, "- [%s] [%s] %s\n", mark, t->deadline, t->title);
+        }
+      else
+        {
+          fprintf(fp, "- [%s] %s\n", mark, t->title);
+        }
+    }
+
+  if (ferror(fp))
+    {
+      fclose(fp);
+      return -1;
+    }
+
+  if (fclose(fp) != 0)
+    {
+      return -1;
+    }
+
+  printf("VelaTime: saved %d task(s) to %s\n", total, AGENT_TASKS_FILE);
+  return total;
+}

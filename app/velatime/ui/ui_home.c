@@ -1,6 +1,7 @@
 #include "velatime_ui.h"
 #include "../core/core_recommend.h"
 #include "../core/core_task.h"
+#include "../core/core_agent_sync.h"
 #include "../include/velatime_types.h"
 
 /* VelaTime 自带中文字库：GB2312 一级汉字 + ASCII，见 ui/velatime_font_cn.c */
@@ -16,24 +17,16 @@ static lv_obj_t *g_btn_start = NULL;
 static lv_obj_t *g_btn_delay = NULL;
 static lv_obj_t *g_status_label = NULL;
 static char g_reminder[192] = "";
+static int g_reminder_shown = 0;
 
 static void apply_reminder_text(void)
 {
-  if (g_card_reason == NULL)
+  /* 提醒不挤占卡片（卡片固定显示推荐理由），改为弹出提醒页。
+     用 g_reminder_shown 防止用户关掉弹窗后又被立刻弹回。 */
+  if (g_reminder[0] != '\0' && !g_reminder_shown)
     {
-      return;
-    }
-
-  if (g_reminder[0] != '\0')
-    {
-      lv_label_set_text(g_card_reason, g_reminder);
-    }
-  else
-    {
-      velatime_recomm_book_t rec;
-      int has_rec = core_recommend_pick(core_recommend_today_weekday(), &rec);
-      lv_label_set_text(g_card_reason,
-                        has_rec ? rec.reason : "Add tasks to get started");
+      g_reminder_shown = 1;
+      velatime_ui_popup_show();
     }
 }
 
@@ -46,6 +39,7 @@ void velatime_ui_set_reminder(const char *text)
 
   strncpy(g_reminder, text, sizeof(g_reminder) - 1);
   g_reminder[sizeof(g_reminder) - 1] = '\0';
+  g_reminder_shown = 0;          /* 新提醒：允许弹一次 */
   apply_reminder_text();
 }
 
@@ -102,6 +96,7 @@ static void on_start_click(lv_event_t *e)
         }
 
       velatime_ui_home_refresh();
+      core_agent_sync_save();      /* 状态写回 TASKS.md，重启不丢 */
     }
 }
 
@@ -119,6 +114,7 @@ static void on_delay_click(lv_event_t *e)
         }
 
       velatime_ui_home_refresh();
+      core_agent_sync_save();      /* 状态写回 TASKS.md，重启不丢 */
     }
 }
 
