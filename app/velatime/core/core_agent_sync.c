@@ -454,12 +454,12 @@ int core_agent_reminder_local(const char *title, const char *reason,
 
   /* 端侧自己也能给出主动提醒：不依赖网络与模型，任何时候都能响。
      格式与 Agent 写回的 REMINDER.txt 保持一致，便于两种来源互换。 */
-  snprintf(out, out_size, "%s | %s | %s",
+  snprintf(out, out_size, "%s | %s | 建议 %s 开始",
            title,
            (reason != NULL) ? reason : "建议现在开始",
            (suggested_start != NULL) ? suggested_start : "--");
 
-  printf("VelaTime: proactive reminder (on-device): %s\n", out);
+  printf("VelaTime: reminder published from device: %s\n", out);
   return 0;
 }
 

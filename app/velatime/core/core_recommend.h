@@ -12,6 +12,7 @@ typedef struct
   char deadline[VELATIME_MAX_DEADLINE];
   int available_minutes;
   char suggested_start[8];
+  char room[VELATIME_MAX_ROOM];
   char reason[VELATIME_MAX_REASON];
 } velatime_recomm_book_t;
 
