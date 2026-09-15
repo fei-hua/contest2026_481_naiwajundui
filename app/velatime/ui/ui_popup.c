@@ -37,14 +37,17 @@ void velatime_ui_popup_show(void)
   velatime_ui_style_screen(scr);
 
   lv_obj_t *card = lv_obj_create(scr);
-  lv_obj_set_size(card, 216, 190);
+  /* 按屏幕比例自适应：模拟器是 1280x800，固定像素会显得极小 */
+  lv_obj_set_size(card, LV_PCT(58), LV_PCT(52));
   lv_obj_center(card);
   lv_obj_set_style_bg_color(card, lv_color_hex(0x1C2130), 0);
-  lv_obj_set_style_radius(card, 12, 0);
+  lv_obj_set_style_radius(card, 16, 0);
   lv_obj_set_style_border_width(card, 0, 0);
-  lv_obj_set_style_pad_all(card, 12, 0);
-  lv_obj_set_style_pad_row(card, 6, 0);
+  lv_obj_set_style_pad_all(card, 24, 0);
+  lv_obj_set_style_pad_row(card, 12, 0);
   lv_obj_set_flex_flow(card, LV_FLEX_FLOW_COLUMN);
+  lv_obj_set_flex_align(card, LV_FLEX_ALIGN_SPACE_EVENLY,
+                        LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
   lv_obj_remove_flag(card, LV_OBJ_FLAG_SCROLLABLE);
 
   lv_obj_t *title = lv_label_create(card);
@@ -73,26 +76,37 @@ void velatime_ui_popup_show(void)
   lv_obj_set_width(detail, LV_PCT(100));
   lv_label_set_long_mode(detail, LV_LABEL_LONG_WRAP);
 
+  /* 有教室就补一行，方便直接出门上课 */
+  if (has_rec && rec.room[0] != '\0')
+    {
+      lv_obj_t *where = lv_label_create(card);
+      lv_label_set_text_fmt(where, "地点：%s", rec.room);
+      lv_obj_set_style_text_color(where, lv_color_hex(0x00D26A), 0);
+      lv_obj_set_width(where, LV_PCT(100));
+      lv_label_set_long_mode(where, LV_LABEL_LONG_DOT);
+    }
+
   lv_obj_t *row = lv_obj_create(card);
   lv_obj_set_width(row, LV_PCT(100));
   lv_obj_set_height(row, LV_SIZE_CONTENT);
   lv_obj_set_style_bg_opa(row, LV_OPA_TRANSP, 0);
   lv_obj_set_style_border_width(row, 0, 0);
   lv_obj_set_style_pad_all(row, 0, 0);
+  lv_obj_set_style_pad_column(row, 16, 0);
   lv_obj_set_flex_flow(row, LV_FLEX_FLOW_ROW);
-  lv_obj_set_flex_align(row, LV_FLEX_ALIGN_SPACE_BETWEEN,
+  lv_obj_set_flex_align(row, LV_FLEX_ALIGN_CENTER,
                         LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
   lv_obj_remove_flag(row, LV_OBJ_FLAG_SCROLLABLE);
 
   lv_obj_t *btn_start = lv_button_create(row);
-  lv_obj_set_size(btn_start, 84, 32);
+  lv_obj_set_size(btn_start, 132, 44);
   lv_obj_t *start_label = lv_label_create(btn_start);
   lv_label_set_text(start_label, "现在开始");
   lv_obj_center(start_label);
   lv_obj_add_event_cb(btn_start, on_start_click, LV_EVENT_CLICKED, NULL);
 
   lv_obj_t *btn_close = lv_button_create(row);
-  lv_obj_set_size(btn_close, 84, 32);
+  lv_obj_set_size(btn_close, 132, 44);
   lv_obj_t *close_label = lv_label_create(btn_close);
   lv_label_set_text(close_label, "稍后再说");
   lv_obj_center(close_label);
