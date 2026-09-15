@@ -3,7 +3,8 @@
 
 #include <lvgl/lvgl.h>
 
-/* VelaTime 自带中文字库（GB2312 一级汉字 + ASCII），见 ui/velatime_font_cn.c */
+/* VelaTime 自带中文字库（GB2312 一级汉字 + ASCII），见 ui/velatime_font_cn.c
+ * 说明：16px 用于正文；如需更大字号，可生成 velatime_font_cn52 并在此声明 */
 extern const lv_font_t velatime_font_cn;
 #define VELATIME_FONT_CN (&velatime_font_cn)
 
