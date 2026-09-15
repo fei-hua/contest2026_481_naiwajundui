@@ -134,25 +134,24 @@ void velatime_ui_init(void)
 void velatime_ui_home_show(void)
 {
   lv_obj_t *scr = lv_obj_create(NULL);
+  lv_obj_t *col;
   lv_obj_t *card;
   lv_obj_t *btn_row;
 
   velatime_ui_style_screen(scr);
+  col = velatime_ui_page_column(scr);   /* 居中内容列，四页统一 */
 
-  lv_obj_t *title = lv_label_create(scr);
+  lv_obj_t *title = lv_label_create(col);
   lv_label_set_text(title, "VelaTime");
   lv_obj_set_style_text_color(title, lv_color_hex(0xFFFFFF), 0);
-  lv_obj_align(title, LV_ALIGN_TOP_LEFT, VELATIME_UI_PAD, VELATIME_UI_PAD);
 
-  lv_obj_t *subtitle = lv_label_create(scr);
+  lv_obj_t *subtitle = lv_label_create(col);
   lv_label_set_text(subtitle, "现在推荐");
   lv_obj_set_style_text_color(subtitle, lv_color_hex(0x8890A0), 0);
-  lv_obj_align_to(subtitle, title, LV_ALIGN_OUT_BOTTOM_LEFT, 0, 8);
 
-  /* 卡片：与标题左对齐、同宽，形成统一竖线 */
-  card = lv_obj_create(scr);
-  lv_obj_set_size(card, VELATIME_UI_CONTENT_W, 300);
-  lv_obj_align_to(card, subtitle, LV_ALIGN_OUT_BOTTOM_LEFT, 0, 24);
+  /* 卡片：与标题同宽、同一条左边界 */
+  card = lv_obj_create(col);
+  lv_obj_set_size(card, LV_PCT(100), 300);
   lv_obj_set_style_bg_color(card, lv_color_hex(0x1C2130), 0);
   lv_obj_set_style_radius(card, 16, 0);
   lv_obj_set_style_border_width(card, 0, 0);
@@ -204,15 +203,14 @@ void velatime_ui_home_show(void)
   lv_obj_center(delay_label);
   lv_obj_add_event_cb(g_btn_delay, on_delay_click, LV_EVENT_CLICKED, NULL);
 
-  g_status_label = lv_label_create(scr);
+  g_status_label = lv_label_create(col);
   lv_label_set_text(g_status_label, "");
   lv_obj_set_style_text_color(g_status_label, lv_color_hex(0x00D26A), 0);
-  lv_obj_align_to(g_status_label, card, LV_ALIGN_OUT_BOTTOM_LEFT, 0, 16);
 
-  /* 底部导航：与内容同宽、左对齐，按钮等分 */
-  lv_obj_t *nav = lv_obj_create(scr);
-  lv_obj_set_size(nav, VELATIME_UI_CONTENT_W, VELATIME_UI_BTN_H);
-  lv_obj_align(nav, LV_ALIGN_BOTTOM_LEFT, VELATIME_UI_PAD, -VELATIME_UI_PAD);
+  /* 底部导航：吸到内容列底部、与内容同宽，按钮从左侧排开 */
+  lv_obj_t *nav = lv_obj_create(col);
+  lv_obj_set_size(nav, LV_PCT(100), VELATIME_UI_BTN_H);
+  lv_obj_align(nav, LV_ALIGN_BOTTOM_LEFT, 0, 0);
   lv_obj_set_style_bg_opa(nav, LV_OPA_TRANSP, 0);
   lv_obj_set_style_border_width(nav, 0, 0);
   lv_obj_set_style_pad_all(nav, 0, 0);

@@ -20,9 +20,14 @@ extern const lv_font_t velatime_font_cn;
 #define VELATIME_UI_PAD         32     /* 页面边距 */
 #define VELATIME_UI_PAD_CARD    24     /* 卡片内边距 */
 #define VELATIME_UI_CONTENT_W   (VELATIME_UI_SCREEN_W - VELATIME_UI_PAD * 2)  /* 1216 */
+#define VELATIME_UI_COL_W       960    /* 居中内容列宽度（所有页面统一） */
 #define VELATIME_UI_BTN_W       200
 #define VELATIME_UI_BTN_H       64
 #define VELATIME_UI_ROW_H       76     /* 列表行高 */
+
+/* 建一个居中内容列并返回它；页面所有控件都放进去，
+   这样四个页面的"内容停靠方式"完全一致（列居中、列内左对齐）。 */
+lv_obj_t *velatime_ui_page_column(lv_obj_t *scr);
 
 /* 各页面共用的根对象样式（底色 / 字体 / 滚动），见 ui/ui_theme.c */
 void velatime_ui_style_screen(lv_obj_t *scr);

@@ -81,15 +81,16 @@ void velatime_ui_schedule_show(void)
   int course_count = 0;
   int i;
   char summary[64];
+  lv_obj_t *col;
   lv_obj_t *list;
 
   lv_obj_t *scr = lv_obj_create(NULL);
   velatime_ui_style_screen(scr);
+  col = velatime_ui_page_column(scr);
 
-  lv_obj_t *title = lv_label_create(scr);
+  lv_obj_t *title = lv_label_create(col);
   lv_label_set_text(title, "今日课程");
   lv_obj_set_style_text_color(title, lv_color_hex(0xFFFFFF), 0);
-  lv_obj_align(title, LV_ALIGN_TOP_LEFT, VELATIME_UI_PAD, VELATIME_UI_PAD);
 
   for (i = 0; i < core_schedule_count(); i++)
     {
@@ -104,14 +105,12 @@ void velatime_ui_schedule_show(void)
   snprintf(summary, sizeof(summary), "周%d · %d 门课 · %d 段空闲",
            weekday, course_count, slot_count);
 
-  lv_obj_t *subtitle = lv_label_create(scr);
+  lv_obj_t *subtitle = lv_label_create(col);
   lv_label_set_text(subtitle, summary);
   lv_obj_set_style_text_color(subtitle, lv_color_hex(0x8890A0), 0);
-  lv_obj_align_to(subtitle, title, LV_ALIGN_OUT_BOTTOM_LEFT, 0, 8);
 
-  list = lv_obj_create(scr);
-  lv_obj_set_size(list, VELATIME_UI_CONTENT_W, 520);
-  lv_obj_align_to(list, subtitle, LV_ALIGN_OUT_BOTTOM_LEFT, 0, 24);
+  list = lv_obj_create(col);
+  lv_obj_set_size(list, LV_PCT(100), 520);
   lv_obj_set_style_bg_opa(list, LV_OPA_TRANSP, 0);
   lv_obj_set_style_border_width(list, 0, 0);
   lv_obj_set_style_pad_all(list, 0, 0);
@@ -140,9 +139,9 @@ void velatime_ui_schedule_show(void)
       lv_obj_set_style_text_color(empty, lv_color_hex(0x8890A0), 0);
     }
 
-  lv_obj_t *btn_back = lv_button_create(scr);
+  lv_obj_t *btn_back = lv_button_create(col);
   lv_obj_set_size(btn_back, VELATIME_UI_BTN_W, VELATIME_UI_BTN_H);
-  lv_obj_align(btn_back, LV_ALIGN_BOTTOM_LEFT, VELATIME_UI_PAD, -VELATIME_UI_PAD);
+  lv_obj_align(btn_back, LV_ALIGN_BOTTOM_LEFT, 0, 0);
   lv_obj_t *back_label = lv_label_create(btn_back);
   lv_label_set_text(back_label, "返回");
   lv_obj_center(back_label);
