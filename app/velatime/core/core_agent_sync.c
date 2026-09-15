@@ -27,10 +27,14 @@ static const char g_student_task_skill[] =
   "\n"
   "## Storage\n"
   "Task file: /data/ai_agent/TASKS.md\n"
-  "Each pending task must use exactly this format:\n"
-  "- [ ] [YYYY-MM-DD] task title\n"
+  "Each task is one line. The first bracket is the status marker:\n"
+  "- [ ] [YYYY-MM-DD] task title      pending\n"
+  "- [>] [YYYY-MM-DD] task title      in progress (set by the device)\n"
+  "- [~] [YYYY-MM-DD] task title      postponed (set by the device)\n"
+  "- [x] [YYYY-MM-DD] task title      completed\n"
   "The date is the deadline, not the creation date.\n"
-  "Completed tasks use - [x].\n"
+  "Keep the existing marker when you rewrite the file: never turn a\n"
+  "[>] or [~] line back into [ ].\n"
   "\n"
   "## Create\n"
   "1. In the same tool round, call get_current_time and read_file "
@@ -157,20 +161,47 @@ static int read_agent_tasks(velatime_task_t *tasks, int *task_count,
       velatime_task_t task;
       char title[128];
       char date[32];
+      char mark;
+      velatime_status_t status = VELATIME_STATUS_WAITING;
 
       hash = hash_bytes(hash, line, strlen(line));
       memset(&task, 0, sizeof(task));
 
-      /* 只导入 "- [ ] [2026-09-07] 高数作业" 格式的待办。 */
-      if (sscanf(line, "- [ ] [%15[^]]] %127[^（(]", date, title) != 2)
+      /* 行格式：- [ ] [YYYY-MM-DD] 标题
+       * 标记位支持四种，便于把"进行中/已延后"也持久化：
+       *   ' ' 待办    'x' 已完成    '>' 进行中    '~' 已延后
+       * 标题里出现中文括号（如"（约半小时）"）时不再截断。 */
+      if (sscanf(line, "- [%c] [%15[^]]] %127[^\n]", &mark, date, title) != 3)
         {
-          continue;
+          /* 没有截止日期的写法也要兼容：- [>] 标题 */
+          if (sscanf(line, "- [%c] %127[^\n]", &mark, title) != 2)
+            {
+              continue;
+            }
+          date[0] = '\0';
         }
 
       trim_title(title);
       if (title[0] == '\0')
         {
           continue;
+        }
+
+      switch (mark)
+        {
+          case 'x':
+          case 'X':
+            status = VELATIME_STATUS_DONE;
+            break;
+          case '>':
+            status = VELATIME_STATUS_DOING;
+            break;
+          case '~':
+            status = VELATIME_STATUS_POSTPONED;
+            break;
+          default:
+            status = VELATIME_STATUS_WAITING;
+            break;
         }
 
       if (count >= VELATIME_MAX_TASKS)
@@ -189,7 +220,7 @@ static int read_agent_tasks(velatime_task_t *tasks, int *task_count,
       task.estimated_minutes = 30;
       strncpy(task.priority, "medium", VELATIME_MAX_PRIORITY - 1);
       task.priority[VELATIME_MAX_PRIORITY - 1] = '\0';
-      task.status = VELATIME_STATUS_WAITING;
+      task.status = status;
       tasks[count++] = task;
     }
 
@@ -501,7 +532,23 @@ int core_agent_sync_save(void)
           continue;
         }
 
-      mark = (t->status == VELATIME_STATUS_DONE) ? "x" : " ";
+      /* 状态映射到行首标记，保证重启后状态不丢：
+         ' ' 待办   'x' 已完成   '>' 进行中   '~' 已延后 */
+      switch (t->status)
+        {
+          case VELATIME_STATUS_DONE:
+            mark = "x";
+            break;
+          case VELATIME_STATUS_DOING:
+            mark = ">";
+            break;
+          case VELATIME_STATUS_POSTPONED:
+            mark = "~";
+            break;
+          default:
+            mark = " ";
+            break;
+        }
 
       if (t->deadline[0] != '\0')
         {
