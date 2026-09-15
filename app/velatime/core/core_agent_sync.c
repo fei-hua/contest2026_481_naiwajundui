@@ -234,6 +234,7 @@ int core_agent_sync_from_file(void)
 
   printf("VelaTime: parsed %d task(s) from %s\n",
          count, AGENT_TASKS_FILE);
+  fflush(stdout);
   return count;
 }
 
@@ -274,6 +275,7 @@ int core_agent_sync_if_changed(void)
 
   printf("VelaTime: synchronized %d task(s) from %s\n",
          count, AGENT_TASKS_FILE);
+  fflush(stdout);
   return 1;
 }
 
@@ -391,6 +393,7 @@ int core_agent_reminder_publish(int pending)
     }
 
   printf("VelaTime: heartbeat armed for %d pending task(s)\n", pending);
+  fflush(stdout);
   return 0;
 }
 
@@ -460,6 +463,7 @@ int core_agent_reminder_local(const char *title, const char *reason,
            (suggested_start != NULL) ? suggested_start : "--");
 
   printf("VelaTime: reminder published from device: %s\n", out);
+  fflush(stdout);
   return 0;
 }
 
@@ -521,5 +525,6 @@ int core_agent_sync_save(void)
     }
 
   printf("VelaTime: saved %d task(s) to %s\n", total, AGENT_TASKS_FILE);
+  fflush(stdout);
   return total;
 }
