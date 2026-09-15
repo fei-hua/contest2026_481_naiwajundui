@@ -111,6 +111,61 @@ int core_task_set_status(const char *id, velatime_status_t status)
   return 0;
 }
 
+int core_task_delete(const char *id)
+{
+  int i;
+
+  if (!id || id[0] == '\0')
+    {
+      return -1;
+    }
+
+  for (i = 0; i < s_count; i++)
+    {
+      if (strcmp(s_tasks[i].id, id) == 0)
+        {
+          int j;
+
+          /* 后面的任务整体前移，保持顺序不变 */
+          for (j = i; j + 1 < s_count; j++)
+            {
+              s_tasks[j] = s_tasks[j + 1];
+            }
+          s_count--;
+          memset(&s_tasks[s_count], 0, sizeof(s_tasks[s_count]));
+          return 0;
+        }
+    }
+
+  return -1;
+}
+
+int core_task_update(const char *id, const char *title, const char *deadline,
+                     velatime_status_t status)
+{
+  velatime_task_t *t = core_task_find(id);
+
+  if (!t)
+    {
+      return -1;
+    }
+
+  if (title != NULL && title[0] != '\0')
+    {
+      strncpy(t->title, title, VELATIME_MAX_TITLE - 1);
+      t->title[VELATIME_MAX_TITLE - 1] = '\0';
+    }
+
+  if (deadline != NULL)
+    {
+      strncpy(t->deadline, deadline, VELATIME_MAX_DEADLINE - 1);
+      t->deadline[VELATIME_MAX_DEADLINE - 1] = '\0';
+    }
+
+  t->status = status;
+  return 0;
+}
+
 int core_task_count(void)
 {
   return s_count;
