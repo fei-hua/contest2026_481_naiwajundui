@@ -3,6 +3,7 @@
 
 #define VELATIME_MAX_TITLE    64
 #define VELATIME_MAX_COURSE   32
+#define VELATIME_MAX_ROOM     64
 #define VELATIME_MAX_DEADLINE 32
 #define VELATIME_MAX_PRIORITY 16
 #define VELATIME_MAX_ID       24
@@ -33,6 +34,7 @@ typedef struct
   int  weekday;               /* 1=周一 ... 7=周日 */
   char start[8];              /* "08:00" */
   char end[8];                /* "09:40" */
+  char room[VELATIME_MAX_ROOM];  /* "学4307室"（可能较长，单独放大字段） */
 } velatime_course_t;
 
 typedef struct

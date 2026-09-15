@@ -39,6 +39,30 @@ int core_recommend_today_weekday(void)
   return (now_tm.tm_wday == 0) ? 7 : now_tm.tm_wday;
 }
 
+/* 根据任务所属课程，找出该课程当天的教室（同名课程取非空教室） */
+static const char *find_course_room(const char *course, int weekday)
+{
+  int i;
+
+  if (course == NULL || course[0] == '\0')
+    {
+      return "";
+    }
+
+  for (i = 0; i < core_schedule_count(); i++)
+    {
+      const velatime_course_t *c = core_schedule_get(i);
+
+      if (c != NULL && c->weekday == weekday &&
+          strcmp(c->name, course) == 0 && c->room[0] != '\0')
+        {
+          return c->room;
+        }
+    }
+
+  return "";
+}
+
 static int priority_score(const char *priority)
 {
   if (strcmp(priority, "high") == 0)
@@ -333,6 +357,13 @@ int core_recommend_pick(int weekday, velatime_recomm_book_t *out)
         strncpy(out->suggested_start, "15:20", 7);
         out->suggested_start[7] = '\0';
       }
+
+    {
+      const char *room = find_course_room(t->course, weekday);
+
+      strncpy(out->room, room, sizeof(out->room) - 1);
+      out->room[sizeof(out->room) - 1] = '\0';
+    }
 
     build_reason(t, out->available_minutes, out->reason,
                  sizeof(out->reason));

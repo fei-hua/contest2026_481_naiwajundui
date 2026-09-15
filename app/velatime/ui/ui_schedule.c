@@ -31,9 +31,26 @@ static void build_course_row(lv_obj_t *parent, const velatime_course_t *course)
   lv_label_set_text(name, course->name);
   lv_obj_set_style_text_color(name, lv_color_hex(0xFFFFFF), 0);
 
-  lv_obj_t *time = lv_label_create(row);
+  lv_obj_t *right = lv_obj_create(row);
+  lv_obj_set_height(right, LV_SIZE_CONTENT);
+  lv_obj_set_style_bg_opa(right, LV_OPA_TRANSP, 0);
+  lv_obj_set_style_border_width(right, 0, 0);
+  lv_obj_set_style_pad_all(right, 0, 0);
+  lv_obj_set_flex_flow(right, LV_FLEX_FLOW_COLUMN);
+  lv_obj_set_flex_align(right, LV_FLEX_ALIGN_CENTER,
+                        LV_FLEX_ALIGN_END, LV_FLEX_ALIGN_END);
+  lv_obj_remove_flag(right, LV_OBJ_FLAG_SCROLLABLE);
+
+  lv_obj_t *time = lv_label_create(right);
   lv_label_set_text_fmt(time, "%s-%s", course->start, course->end);
   lv_obj_set_style_text_color(time, lv_color_hex(0x8890A0), 0);
+
+  if (course->room[0] != '\0')
+    {
+      lv_obj_t *room = lv_label_create(right);
+      lv_label_set_text(room, course->room);
+      lv_obj_set_style_text_color(room, lv_color_hex(0x6B7280), 0);
+    }
 }
 
 static void build_slot_row(lv_obj_t *parent, const velatime_free_slot_t *slot)
